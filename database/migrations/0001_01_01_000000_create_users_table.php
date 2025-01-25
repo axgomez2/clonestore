@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('phone', 20)->nullable()->unique();
+            $table->string('cpf', 14)->nullable()->unique();
+
+            $table->tinyInteger('role')->default(20);//20user - 40 revendedor 66 - admin
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

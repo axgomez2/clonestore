@@ -28,7 +28,19 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        session()->flash('success', 'Bem-vindo, ' . Auth::user()->name . '! Login efetuado com sucesso.');
+
+        $authUserRole = Auth::user()->role;
+
+        if($authUserRole == 66){
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+        elseif($authUserRole == 40){
+            return redirect()->intended(route('pdv.dashboard', absolute: false));
+        }
+        else{
+            return redirect()->intended(route('site.home', absolute: false));
+        }
     }
 
     /**

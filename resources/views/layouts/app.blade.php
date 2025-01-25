@@ -1,36 +1,93 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="@yield('meta_description', 'A LOJA REFERENCIA EM DISCOS DE DE DANCE MUSIC.')">
+    <meta name="keywords" content="@yield('meta_keywords', 'vinyl, records, music, albums, turntable, audiophile')">
+    <meta name="author" content="Your Company Name">
+    <meta name="robots" content="index, follow">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <title>@yield('title', 'EMBAIXADA DANCE MUSIC - 30 ANOS DE MERCADO')</title>
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-            @include('layouts.navigation')
+    <!-- Fonts -->
+    <link rel="canonical" href="{{ url()->current() }}">
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
-        </div>
-    </body>
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+
+    <!-- Facebook Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="@yield('og_title', 'A LOJA REFERENCIA EM DISCOS DE DE DANCE MUSIC.')">
+    <meta property="og:description" content="@yield('og_description', 'Discover and purchase high-quality vinyl records from our extensive collection.')">
+    <meta property="og:image" content="@yield('og_image', asset('images/og-image.jpg'))">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@yourtwitterhandle">
+    <meta name="twitter:title" content="@yield('twitter_title', 'A LOJA REFERENCIA EM DISCOS DE DE DANCE MUSIC.')">
+    <meta name="twitter:description" content="@yield('twitter_description', 'Discover and purchase high-quality vinyl records from our extensive collection.')">
+    <meta name="twitter:image" content="@yield('twitter_image', asset('images/twitter-image.jpg'))">
+
+
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+
+    {{-- font awesome --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+
+    <!-- Custom CSS -->
+    @stack('styles')
+
+    <!-- Google Analytics -->
+    <!-- Replace UA-XXXXX-Y with your actual Google Analytics tracking code -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-Y"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'UA-XXXXX-Y');
+    </script>
+</head>
+
+
+<body>
+    @include('components.site.navbar2')
+    <!-- Page Content -->
+    <div class=" bg-gray-100">
+        {{ $slot }}
+    </div>
+    @include('components.site.audio-player')
+
+
+
+    @stack('scripts')
+
+
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script src="{{ asset('assets/js/audio-player.js') }}"></script>
+    <script src="{{ asset('assets/js/track-cards.js') }}"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+
+
+</body>
+
 </html>
