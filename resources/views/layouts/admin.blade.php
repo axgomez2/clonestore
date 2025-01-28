@@ -8,7 +8,29 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.40.0/tabler-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler-fonts.min.css">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .admin-logo {
+          height: 2.5rem; /* Equivalente a h-10 */
+        }
+
+        @media (min-width: 640px) {
+          .admin-logo {
+            height: 3rem; /* Equivalente a sm:h-12 */
+          }
+        }
+
+        @media (min-width: 768px) {
+          .admin-logo {
+            height: 3.5rem; /* Equivalente a md:h-14 */
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .admin-logo {
+            height: 4rem; /* Equivalente a lg:h-16 */
+          }
+        }
+      </style>
   </head>
   <body>
     <div class="page">
@@ -19,7 +41,9 @@
             <span class="navbar-toggler-icon"></span>
           </button>
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-            <a href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/logo_embaixada.png') }}" alt="logo" class='h-10 sm:h-12 md:h-14 lg:h-16' /></a>
+            <a href="{{ route('admin.dashboard') }}">
+              <img src="{{ asset('assets/images/logo_embaixada.png') }}" alt="logo" class="admin-logo" />
+            </a>
           </h1>
           <div class="navbar-nav flex-row order-md-last">
             <div class="nav-item dropdown d-none d-md-flex me-3">
@@ -192,8 +216,9 @@
         </footer>
       </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+
     @stack('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
   </body>
 </html>
 

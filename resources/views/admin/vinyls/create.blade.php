@@ -43,12 +43,6 @@
 
             @if($selectedRelease)
 
-
-
-
-
-
-
             <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">Voce selecionou o disco: {{ $selectedRelease['title'] }}</h3>
@@ -301,7 +295,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({ release_id: releaseId })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 modalTitle.textContent = data.status === 'success' ? 'Success' :
                                          data.status === 'warning' ? 'Warning' : 'Error';
@@ -316,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 modalTitle.textContent = 'Error';
-                modalMessage.textContent = 'An unexpected error occurred.';
+                modalMessage.textContent = 'An unexpected error occurred. Please try again.';
                 completeNowBtn.style.display = 'none';
                 completeLaterBtn.style.display = 'none';
                 modal.show();

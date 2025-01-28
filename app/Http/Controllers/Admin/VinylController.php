@@ -23,6 +23,8 @@ use App\Models\Media;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 
+use Illuminate\Support\Facades\Log;
+
 class VinylController extends Controller
 {
     public function index()
@@ -316,6 +318,53 @@ class VinylController extends Controller
             return back()->withInput()->with('error', 'An error occurred while completing the vinyl record: ' . $e->getMessage());
         }
     }
+
+    public function destroy($id)
+{
+    $vinyl = VinylMaster::findOrFail($id);
+
+    try {
+        DB::beginTransaction();
+
+        // Delete related records
+        $vinyl->artists()->detach();
+        $vinyl->genres()->detach();
+        $vinyl->styles()->detach();
+        $vinyl->tracks()->delete();
+
+        // Delete VinylSec if it exists
+        if ($vinyl->vinylSec) {
+            $vinyl->vinylSec->delete();
+        }
+
+        // Delete associated product if it exists
+        if ($vinyl->product) {
+            $vinyl->product->delete();
+        }
+
+        // Delete cover image if it exists
+        if ($vinyl->cover_image) {
+            Storage::disk('public')->delete($vinyl->cover_image);
+        }
+
+        // Delete any additional images associated with the vinyl
+        foreach ($vinyl->media as $media) {
+            Storage::disk('public')->delete($media->file_path);
+            $media->delete();
+        }
+
+        // Finally, delete the vinyl master record
+        $vinyl->delete();
+
+        DB::commit();
+
+        return redirect()->route('admin.vinyls.index')->with('success', 'Disco excluído com sucesso.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Error deleting vinyl: ' . $e->getMessage());
+        return redirect()->route('admin.vinyls.index')->with('error', 'Ocorreu um erro ao excluir o disco. Por favor, tente novamente.');
+    }
+}
     }
 
 
