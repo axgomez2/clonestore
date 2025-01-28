@@ -79,6 +79,7 @@
             @click="playVinylTracks"
             data-vinyl-id="{{ $vinyl->id }}"
             data-vinyl-title="{{ $vinyl->title }}"
+            data-cover-url="{{ asset('storage/' . $vinyl->cover_image) }}"
             data-artist="{{ $vinyl->artists->pluck('name')->implode(', ') }}"
             data-tracks="{{ json_encode($vinyl->tracks) }}"
         >

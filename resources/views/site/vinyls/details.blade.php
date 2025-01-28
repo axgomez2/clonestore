@@ -155,14 +155,22 @@
 
 
                                                 @if($track->youtube_url)
-                                        <button
-                                            onclick="window.audioPlayer.loadTrack({{ json_encode($track) }})"
-                                            class="btn btn-sm btn-circle btn-ghost track-play-button"
-                                        >
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-                                        </svg>
-                                        </button>
+                                                <button
+                                                onclick="window.audioPlayer.loadTrack({{ json_encode([
+                                                    'id' => $track->id,
+                                                    'name' => $track->name,
+                                                    'artist' => $vinyl->artists->pluck('name')->implode(', '),
+                                                    'youtube_url' => $track->youtube_url,
+                                                    'cover_url' => asset('storage/' . $vinyl->cover_image),
+                                                    'vinyl_title' => $vinyl->title
+                                                ]) }})"
+                                                class="btn btn-sm btn-circle btn-ghost track-play-button"
+                                                title="Play track"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
                                     @else
                                         <span class="text-gray-500">N/A</span>
                                     @endif
