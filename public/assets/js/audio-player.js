@@ -199,18 +199,31 @@ class AudioPlayer {
   }
 
   updatePlayerInfo() {
-    console.log("Updating player info:", this.currentTrack)
-    const titleElement = document.getElementById("track-title")
-    const artistElement = document.getElementById("track-artist")
-    const coverElement = document.getElementById("album-cover")
+    console.log("Updating player info:", this.currentTrack);
+    const titleElement = document.getElementById("track-title");
+    const artistElement = document.getElementById("track-artist");
+    const coverElement = document.getElementById("album-cover");
 
-    if (titleElement) titleElement.textContent = this.currentTrack.name || "Unknown Track"
-    if (artistElement)
-      artistElement.textContent = `${this.currentTrack.artist} - ${this.currentTrack.vinyl_title}` || "Unknown Artist"
-    if (coverElement) {
-      coverElement.src = this.currentTrack.cover_url || "/path/to/default/cover.jpg"
-      coverElement.alt = `${this.currentTrack.vinyl_title} cover`
+    if (titleElement) titleElement.textContent = this.currentTrack.name || "Unknown Track";
+    if (artistElement) {
+      artistElement.textContent = `${this.currentTrack.artist || 'Unknown Artist'} - ${this.currentTrack.vinyl_title || 'Unknown Album'}`;
     }
+
+    if (coverElement) {
+      if (this.currentTrack.cover_url) {
+        coverElement.src = this.currentTrack.cover_url;
+      } else {
+        coverElement.src = "/images/default-cover.jpg"; // Certifique-se de que esta imagem padrão existe
+      }
+      coverElement.alt = `${this.currentTrack.vinyl_title || 'Album'} cover`;
+
+      // Adicione um manipulador de erro para a imagem
+      coverElement.onerror = function() {
+        this.src = "/images/default-cover.jpg"; // Use a mesma imagem padrão aqui
+      };
+    }
+
+    console.log("Cover URL:", this.currentTrack.cover_url);
   }
 
   updatePlayPauseButton(isPlaying) {

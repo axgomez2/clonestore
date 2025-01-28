@@ -14,17 +14,19 @@
             data-vinyl-id="{{ $vinyl->id }}"
             data-tracks="{{ json_encode($vinyl->tracks) }}"
             data-artist="{{ $vinyl->artists->pluck('name')->implode(', ') }}"
-            data-cover-url="{{ $vinyl->cover_image }}"
+            data-cover-url="{{ asset('storage/' . $vinyl->cover_image) }}"
             data-vinyl-title="{{ $vinyl->title }}"
         >
             <i class="fas fa-play text-xs"></i>
         </button>
     </figure>
     <div class="card-body p-3 text-sm">
+        <a href="{{ route('site.vinyl.show', ['artistSlug' => $vinyl->artists->first()->slug, 'titleSlug' => $vinyl->slug]) }}" class="block">
         <h2 class="card-title text-base font-semibold line-clamp-1">
             {{ $vinyl->artists->pluck('name')->implode(', ') }}
         </h2>
         <p class="text-xs text-gray-600 line-clamp-1">{{ $vinyl->title }}</p>
+    </a>
         <div class="flex justify-between items-center mt-1">
             <div>
                 <p class="text-xs text-gray-500">{{ $vinyl->recordLabel->name }} • {{ $vinyl->release_year }}</p>
