@@ -1,10 +1,13 @@
+
+
+
 <nav x-data="{ open: false }" class= "text-white    ">
     <!-- Top navbar - Currency and Search -->
-    <div class=" bg-sky-950 border-b border-gray-800">
+    <div class=" bg-gray-900 border-b border-gray-800">
         <div class="container mx-auto">
             <div class="flex items-center justify-between h-12 px-4">
                 <!-- Search Bar -->
-                
+
 
                 <div class="flex-1 max-w-2xl mx-4">
                     <div class="relative">
@@ -109,7 +112,20 @@
                                     </a>
                                 </li>
                             </ul>
+
+
                         </div>
+                        <dialog id="register" class="modal">
+                            <div class="modal-box">
+                                @include('components.site.register')
+                            </div>
+                        </dialog>
+
+                        <dialog id="login" class="modal">
+                            <div class="modal-box">
+                                @include('components.site.login')
+                            </div>
+                        </dialog>
                     @endauth
                 </div>
             </div>
@@ -131,7 +147,7 @@
 
                 <!-- Mobile menu -->
                 <div x-show="open" @click.away="open = false"
-                    class="absolute left-0 w-full bg-gray-900 shadow-lg z-50">
+                    class="absolute left-0 w-full bg-gray-600 shadow-lg z-50">
                     <div class="px-2 pt-2 pb-3 space-y-1">
                         <a href="{{ route('site.home') }}"
                             class="block px-3 py-2 text-white hover:bg-gray-700 rounded-md">Inicio</a>
@@ -177,18 +193,9 @@
 </nav>
 
 
-<dialog id="login" class="modal">
-    <div class="modal-box">
-        @include('components.site.login')
-    </div>
-</dialog>
 
 
-<dialog id="register" class="modal">
-    <div class="modal-box">
-        @include('components.site.register')
-    </div>
-</dialog>
+
 
 {{-- modal search --}}
 <dialog id="search" class="modal">

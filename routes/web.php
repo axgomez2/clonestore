@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Pdv\PainelController;
 use App\Http\Controllers\Site\AboutController;
+use App\Http\Controllers\Site\WantlistController;
 use Illuminate\Support\Facades\Route;
 
 // site use
@@ -15,6 +16,7 @@ use App\Http\Controllers\Site\WishlistController;
 use App\Http\Controllers\Site\CartController;
 use App\Http\Controllers\Site\CartItemController;
 use App\Http\Controllers\Site\CheckoutController;
+
 
 // admin  use
 use App\Http\Controllers\Admin\DashboardController;
@@ -46,6 +48,10 @@ Route::middleware(['auth', 'verified', 'rolemanager:user'])->group(function () {
     Route::put('/carrinho/items/{cartItem}', [CartItemController::class, 'update'])->name('site.cart.items.update');
     Route::delete('/cart/items/{cartItem}', [CartItemController::class, 'destroy'])->name('site.cart.items.destroy');
 
+//  Rotas de wantlist
+    Route::get('/wantlist', [WantlistController::class, 'index'])->name('site.wantlist.index');
+    Route::post('/wantlist/toggle', [WantlistController::class, 'toggle'])->name('site.wantlist.toggle');
+//rotas de checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('site.checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('site.checkout.process');
 

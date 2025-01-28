@@ -107,5 +107,18 @@ public function inWishlist()
         ])->exists();
     }
 
+    public function inWantlist()
+{
+    if (!auth()->check()) {
+        return false;
+    }
+    return $this->wantlists()->where('user_id', auth()->id())->exists();
+}
+
+public function wantlists()
+{
+    return $this->morphMany(Wantlist::class, 'product');
+}
+
 
 }

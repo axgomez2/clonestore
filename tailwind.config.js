@@ -18,5 +18,13 @@ export default {
         },
     },
 
-    plugins: [forms, daisyui],
+    plugins: [
+        forms,
+        daisyui
+    ],
+
+    // Configuração do daisyUI separada dos plugins
+    daisyui: {
+        themes: ["corporate"],
+    },
 };

@@ -17,15 +17,7 @@ class CartController extends Controller
         return view('site.cart.index', compact('cart'));
     }
 
-    public function store(Request $request)
-    {
-        $cart = $this->getOrCreateCart();
 
-        // Lógica para adicionar item ao carrinho
-        // Isso será implementado no CartItemController
-
-        return redirect()->route('site.cart.index')->with('success', 'Item adicionado ao carrinho.');
-    }
 
     public function update(Request $request, Cart $cart)
     {

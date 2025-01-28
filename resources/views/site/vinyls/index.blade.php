@@ -59,86 +59,115 @@
     <h2 class="font-jersey text-xl sm:text-3xl  text-gray-800 mt-3  ">Todos os discos</h2>
     <div class="divider mb-3"></div>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-@foreach($vinyls as $vinyl)
 
 
+        @foreach($vinyls as $vinyl)
+<div x-data="vinylCard()" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group h-full">
+    <figure class="relative aspect-square overflow-hidden">
+        <img
+            src="{{ $vinyl->cover_image }}"
+            alt="{{ $vinyl->title }} by {{ $vinyl->artists->pluck('name')->implode(', ') }}"
+            class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
+            onerror="this.src='https://placehold.co/600x400?text=imagem+não+disponivel'"
+        />
+        @if($vinyl->vinylSec && $vinyl->vinylSec->is_promotional == 1)
+            <div class="indicator-item indicator-start badge badge-secondary absolute top-2 left-2 text-xs">Oferta</div>
+        @endif
+        <button
+            x-ref="playButton"
+            class="play-button absolute bottom-2 right-2 btn btn-circle btn-sm btn-primary"
+            @click="playVinylTracks"
+            data-vinyl-id="{{ $vinyl->id }}"
+            data-vinyl-title="{{ $vinyl->title }}"
+            data-artist="{{ $vinyl->artists->pluck('name')->implode(', ') }}"
+            data-tracks="{{ json_encode($vinyl->tracks) }}"
+        >
+            <i class="fas fa-play text-xs"></i>
+        </button>
+    </figure>
+    <div class="card-body p-3 text-sm">
+        <a href="{{ route('site.vinyl.show', ['artistSlug' => $vinyl->artists->first()->slug, 'titleSlug' => $vinyl->slug]) }}" class="block">
+            <h2 class="card-title text-base font-semibold line-clamp-1">
+                {{ $vinyl->artists->pluck('name')->implode(', ') }}
+            </h2>
+            <p class="text-xs text-gray-600 line-clamp-1">{{ $vinyl->title }}</p>
+        </a>
+        <div class="flex justify-between items-center mt-1">
+            <div>
+                <p class="text-xs text-gray-500">{{ $vinyl->recordLabel->name }} • {{ $vinyl->release_year }}</p>
+                @if($vinyl->vinylSec && $vinyl->vinylSec->quantity > 0)
+                    @if($vinyl->vinylSec->is_promotional == 1)
 
-        <div x-data="vinylCard()" class="group relative overflow-hidden rounded-sm shadow-md hover:shadow-xl transition-all duration-300 bg-white transform hover:-translate-y-2">
-        <div class="relative aspect-square overflow-hidden">
-            <img
-                src="{{ $vinyl->cover_image }}"
-                alt="{{ $vinyl->title }} by {{ $vinyl->artists->pluck('name')->implode(', ') }}"
-                class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
-                onerror="this.src='{{ asset('images/default-album-cover.jpg') }}'"
+                        <p class="text-sm font-bold text-red-600">R$ {{ number_format($vinyl->vinylSec->promotional_price, 2, ',', '.') }}</p>
+                    @else
+                        <p class="text-sm font-bold">R$ {{ number_format($vinyl->vinylSec->price, 2, ',', '.') }}</p>
+                    @endif
+                @else
+                    <p class="text-sm font-bold text-red-500">Indisponível</p>
+                @endif
+            </div>
+            <button
+                type="button"
+                title="{{ $vinyl->inWishlist() ? 'Remover dos favoritos' : 'Adicionar aos favoritos' }}"
+                class="wishlist-button btn btn-circle btn-xs btn-outline"
+                onclick="toggleFavorite({{ $vinyl->id }}, 'App\\Models\\VinylMaster', this)"
+                data-in-wishlist="{{ $vinyl->inWishlist() ? 'true' : 'false' }}"
             >
+                <i class="fas fa-heart {{ $vinyl->inWishlist() ? 'text-red-500' : 'text-gray-400' }}"></i>
+            </button>
         </div>
-            <div class="p-4">
-            <a href="{{ route('site.vinyl.show', ['artistSlug' => $vinyl->artists->first()->slug, 'titleSlug' => $vinyl->slug]) }}" class="block flex-grow">
-                <h3 class="text-xl font-semibold text-gray-800 hover:text-primary transition-colors duration-200 line-clamp-1">{{ $vinyl->artists->pluck('name')->implode(', ') }}</h3>
-                <p class="text-base text-gray-600 line-clamp-1 mt-1">{{ $vinyl->title }}</p>
-            </a>
-
-            <div class="flex flex-col mt-3">
-                <div class="mb-2">
-                    <p class="text-xs text-gray-500">{{ $vinyl->recordLabel->name }}</p>
-                    <p class="text-xs text-gray-500">{{ $vinyl->release_year }}</p>
-                    @if($vinyl->vinylSec)
-
-                    <p class="text-lg font-bold text-primary mt-1">R$ {{ number_format($vinyl->vinylSec->price, 2, ',', '.') }}</p>
-                    @else
-                    <p class="text-lg font-bold text-primary mt-1">sem estoque</p>
-                    @endif
-
-
-                </div>
-                <div class="flex justify-between items-center mt-3">
-                    @if($vinyl->vinylSec)
-                    <button type="button" class="btn btn-outline flex-grow" onclick="addToCart({{ $vinyl->product->id }}, 1, this)">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="add-to-cart-text truncate">
-                            adicionar ao carrinho
-                        </span>
-                    </button>
-                    @else
-                    <span class="add-to-cart-text">
-                        <button type="button" class="btn btn-outline flex-grow" >
-
-                            <span class="add-to-cart-text cursor-not-allowed">
-                                produto indisponivel
-                            </span>
-                        </button>
-                    </span>
-                    @endif
-                    <button
-                        type="button"
-                        title="{{ $vinyl->inWishlist() ? 'Remove from wishlist' : 'Add to wishlist' }}"
-                        class="wishlist-button ml-2 p-2 bg-gray-100 hover:bg-gray-200 rounded-full focus:outline-none transition-colors duration-200"
-                        onclick="toggleFavorite({{ $vinyl->id }}, 'App\\Models\\VinylMaster', this)"
-                        data-in-wishlist="{{ $vinyl->inWishlist() ? 'true' : 'false' }}"
-                    >
-                        <i class="fas fa-heart text-xl {{ $vinyl->inWishlist() ? 'text-red-500' : 'text-gray-400 hover:text-red-500' }}"></i>
-                    </button>
-                </div>
+        <div class="card-actions justify-end mt-2">
+            @if($vinyl->vinylSec && $vinyl->vinylSec->quantity > 0)
                 <button
-                    x-ref="playButton"
-                    class="track-play-button mt-4 w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded transition-colors duration-300"
-                    @click="playVinylTracks"
-                    data-vinyl-id="{{ $vinyl->id }}"
-                    data-vinyl-title="{{ $vinyl->title }}"
-                    data-artist="{{ $vinyl->artists->pluck('name')->implode(', ') }}"
-                    data-tracks="{{ json_encode($vinyl->tracks) }}"
+                    type="button"
+                    class="btn btn-primary btn-sm w-full"
+                    onclick="addToCart({{ $vinyl->product->id }}, 1, this)"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Play
+                    <i class="fas fa-shopping-cart mr-1 text-xs"></i>
+                    <span class="add-to-cart-text text-xs">
+                        Adicionar ao Carrinho
+                    </span>
                 </button>
-            </div>
+            @else
+                <button
+                    type="button"
+                    title="{{ $vinyl->inWantlist() ? 'Remover da Wantlist' : 'Adicionar à Wantlist' }}"
+                    class="wantlist-button btn btn-outline btn-sm w-full"
+                    onclick="toggleWantlist({{ $vinyl->id }}, 'App\\Models\\VinylMaster', this)"
+                    data-in-wantlist="{{ $vinyl->inWantlist() ? 'true' : 'false' }}"
+                >
+                    <i class="fas fa-bookmark mr-1 text-xs"></i>
+                    <span class="text-xs">
+                        {{ $vinyl->inWantlist() ? 'Remover da Wantlist' : 'Adicionar à Wantlist' }}
+                    </span>
+                </button>
+            @endif
+        </div>
+    </div>
+</div>
+@endforeach
+
+
+
+
+
+
+
+
+
+
+
+                    <!-- Add pagination links here -->
+                    {{ $vinyls->links() }}
+                </div>
             </div>
         </div>
+    </div>
 
-@endforeach
+
+
+
+
 
     </div></div>
 

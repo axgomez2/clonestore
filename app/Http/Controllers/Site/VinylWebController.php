@@ -13,7 +13,7 @@ class VinylWebController extends Controller
 {
     public function index(Request $request)
     {
-        $query = VinylMaster::with(['artists', 'recordLabel', 'vinylSec', 'styles', 'product']);
+        $query = VinylMaster::with(['artists', 'recordLabel', 'vinylSec', 'styles', 'product', 'tracks']);
 
         // Apply search independently
         if ($request->filled('search')) {
@@ -33,21 +33,23 @@ class VinylWebController extends Controller
         $query = $this->applySorting($query, $request);
 
         $vinyls = $query->paginate(20)->appends($request->all());
+
+        // Transform the vinyls to include track information
+        $vinyls->getCollection()->transform(function ($vinyl) {
+            $vinyl->tracks->transform(function ($track) use ($vinyl) {
+                $track->artist = $vinyl->artists->pluck('name')->implode(', ');
+                $track->cover_url = $vinyl->cover_image_url;
+                return $track;
+            });
+            return $vinyl;
+        });
+
         $styles = Style::all();
 
         // Get min and max prices
         $priceRange = VinylSec::selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first();
 
         return view('site.vinyls.index', compact('vinyls', 'styles', 'priceRange'));
-    }
-
-    public function show($artistSlug, $titleSlug)
-    {
-        $vinyl = VinylMaster::whereHas('artists', function ($query) use ($artistSlug) {
-            $query->where('slug', $artistSlug);
-        })->where('slug', $titleSlug)->firstOrFail();
-
-        return view('site.vinyls.details', compact('vinyl'));
     }
 
     private function applyFilters($query, $request)

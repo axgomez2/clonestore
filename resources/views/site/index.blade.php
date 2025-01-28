@@ -39,15 +39,18 @@
 
 
 
-    <div class="font-[sans-serif]e p-4 mx-auto max-w-[1400px]">
-        <h2 class="font-jersey text-xl sm:text-3xl  text-gray-800 mt-3  ">Ultimos discos adicionados</h2>
-        <div class="divider mb-3"></div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-          @foreach($latestVinyls as $vinyl)
+<div class="font-[sans-serif] p-4 mx-auto max-w-[1400px]">
+    <h2 class="font-jersey text-xl sm:text-3xl text-gray-800 mt-3">Últimos discos adicionados</h2>
+    <div class="divider mb-3"></div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+        @foreach($latestVinyls as $vinyl)
             @include('components.site.vinyl-card', ['vinyl' => $vinyl])
-          @endforeach
-        </div>
+        @endforeach
     </div>
+</div>
+
+
+
 
 
 </x-app-layout>

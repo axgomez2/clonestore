@@ -47,7 +47,6 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-
     <!-- Custom CSS -->
     @stack('styles')
 
@@ -63,6 +62,7 @@
         gtag('js', new Date());
         gtag('config', 'UA-XXXXX-Y');
     </script>
+
 </head>
 
 
@@ -74,17 +74,23 @@
     </div>
     @include('components.site.audio-player')
 
-
-
-    @stack('scripts')
+    @include('site.footer')
 
 
 
     <script src="https://www.youtube.com/iframe_api"></script>
-
-    <script src="{{ asset('assets/js/audio-player.js') }}"></script>
-    <script src="{{ asset('assets/js/track-cards.js') }}"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="{{ asset('assets/js/audio-player.js') }}" defer></script>
+    <script src="{{ asset('assets/js/vinyl-card.js') }}" defer></script>
+    <script src="{{ asset('assets/js/track-list.js') }}" defer></script>
+    <script src="{{ asset('assets/js/vinyl-player.js') }}" defer></script>
+    <script src="{{ asset('assets/js/favorites.js') }}"></script>
+    <script src="{{ asset('assets/js/cart.js') }}"></script>
+    <script src="{{ asset('assets/js/wantlist.js') }}"></script>
+    <script src="{{ asset('assets/js/toast.js') }}" type="module"></script>
+
+
+    @stack('scripts')
 
 
 

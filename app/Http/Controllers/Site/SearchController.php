@@ -22,6 +22,15 @@ class SearchController extends Controller
             })
             ->get();
 
+        $vinyls->transform(function ($vinyl) {
+            $vinyl->tracks->transform(function ($track) use ($vinyl) {
+                $track->artist = $vinyl->artists->pluck('name')->implode(', ');
+                $track->cover_url = $vinyl->cover_image_url;
+                return $track;
+            });
+            return $vinyl;
+        });
+
         $equipments = Equipment::where(function ($q) use ($query) {
             $q->where('name', 'LIKE', "%{$query}%")
               ->orWhere('description', 'LIKE', "%{$query}%");
