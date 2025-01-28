@@ -65,10 +65,10 @@
 <div x-data="vinylCard()" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group h-full">
     <figure class="relative aspect-square overflow-hidden">
         <img
-            src="{{ $vinyl->cover_image }}"
+            src="{{ asset('storage/' . $vinyl->cover_image) }}"
             alt="{{ $vinyl->title }} by {{ $vinyl->artists->pluck('name')->implode(', ') }}"
             class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
-            onerror="this.src='https://placehold.co/600x400?text=imagem+não+disponivel'"
+            onerror="this.src='{{ asset('assets/images/placeholder.jpg') }}'"
         />
         @if($vinyl->vinylSec && $vinyl->vinylSec->is_promotional == 1)
             <div class="indicator-item indicator-start badge badge-secondary absolute top-2 left-2 text-xs">Oferta</div>

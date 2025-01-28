@@ -51,7 +51,7 @@
                                 <tr>
                                     <td>
 
-                                        <span class="avatar avatar-md" style="background-image: url({{ $vinyl->cover_image ? asset('storage/' . $vinyl->cover_image) : asset('images/placeholder.jpg')}})"></span>
+                                        <span class="avatar avatar-md" style="background-image: url({{ $vinyl->cover_image ? asset('storage/' . $vinyl->cover_image) : asset('assets/images/placeholder.jpg') }})"></span>
                                     </td>
                                     <td>{{ $vinyl->artists->pluck('name')->join(', ') }} - </td>
                                     <td class="text-muted">{{ $vinyl->title }}</td>
