@@ -45,16 +45,17 @@
                                 class="absolute left-0 mt-2 w-48 bg-gray-900 rounded-md shadow-lg z-50">
                                 <a href="{{ route('profile.edit') }}"
                                     class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Editar Perfil</a>
-                                <a href="{{ route('site.cart.index') }}"
+                                <a href="{{ route('site.wishlist.index') }}"
                                     class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Lista de Desejos</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">meus
-                                    pedidos</a>
+                                    <a href="{{ route('site.wantlist.index') }}"
+                                    class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Wantlist</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Meus Pedidos</a>
                                 <hr class="border-b-0 my-4" />
                                 <form method="POST" action="{{ route('logout') }}" id="logout-form">
                                     @csrf
                                     <button type="submit"
                                         class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700">
-                                        Logout
+                                        sair da conta
                                     </button>
                                 </form>
                             </div>
@@ -90,8 +91,8 @@
                             </label>
                             <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-indigo-600 rounded-box w-52 mt-4">
                                 <li>
-                                    <a class="hover:bg-indigo-950 transition-colors duration-200"
-                                        onclick="login.showModal()">
+                                    <a href="{{route('login')}}" class="hover:bg-indigo-950 transition-colors duration-200"
+                                        >
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -101,8 +102,8 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="hover:bg-base-200 transition-colors duration-200"
-                                        onclick="register.showModal()">
+                                    <a href="{{route('register')}}" class="hover:bg-base-200 transition-colors duration-200"
+                                       >
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -115,17 +116,7 @@
 
 
                         </div>
-                        <dialog id="register" class="modal">
-                            <div class="modal-box">
-                                @include('components.site.register')
-                            </div>
-                        </dialog>
 
-                        <dialog id="login" class="modal">
-                            <div class="modal-box">
-                                @include('components.site.login')
-                            </div>
-                        </dialog>
                     @endauth
                 </div>
             </div>
