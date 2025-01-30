@@ -365,7 +365,32 @@ class VinylController extends Controller
         return redirect()->route('admin.vinyls.index')->with('error', 'Ocorreu um erro ao excluir o disco. Por favor, tente novamente.');
     }
 }
+
+    public function updateField(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:vinyl_masters,id',
+            'field' => 'required|in:is_promotional,in_stock',
+            'value' => 'required|boolean',
+        ]);
+
+        $vinyl = VinylMaster::findOrFail($request->id);
+
+        if (!$vinyl->vinylSec) {
+            $vinyl->vinylSec = new VinylSec();
+            $vinyl->vinylSec->vinyl_master_id = $vinyl->id;
+        }
+
+        $vinyl->vinylSec->{$request->field} = $request->value;
+        $result = $vinyl->vinylSec->save();
+
+        if ($result) {
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Failed to update the record'], 500);
+        }
     }
+}
 
 
 

@@ -30,7 +30,7 @@
                         <select id="weight_id" name="weight_id" class="form-select" required>
                             <option value="">Selecionar peso:</option>
                             @foreach($weights as $weight)
-                                <option value="{{ $weight->id }}">{{ $weight->name }} ({{ $weight->value }} {{ $weight->unit }})</option>
+                                <option value="{{ $weight->id }}" {{ $weight->id == 1 ? 'selected' : '' }}>{{ $weight->name }} ({{ $weight->value }} {{ $weight->unit }})</option>
                             @endforeach
                         </select>
                     </div>
@@ -39,14 +39,14 @@
                         <select id="dimension_id" name="dimension_id" class="form-select" required>
                             <option value="">Selecionar dimensão</option>
                             @foreach($dimensions as $dimension)
-                                <option value="{{ $dimension->id }}">{{ $dimension->name }} ({{ $dimension->height }}x{{ $dimension->width }}x{{ $dimension->depth }} {{ $dimension->unit }})</option>
+                                <option value="{{ $dimension->id }}" {{ $dimension->id == 3 ? 'selected' : '' }}>{{ $dimension->name }} ({{ $dimension->height }}x{{ $dimension->width }}x{{ $dimension->depth }} {{ $dimension->unit }})</option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="quantity">Estoque</label>
-                        <input type="number" id="quantity" name="quantity" min="0" class="form-control" required>
+                        <input type="number" id="quantity" name="quantity" min="0" class="form-control" value="1" required>
                     </div>
 
                     <div class="col-md-3 mb-3">
@@ -62,11 +62,11 @@
                         <label class="form-label">produto novo?</label>
                         <div>
                             <label class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_new" value="1" checked>
+                                <input class="form-check-input" type="radio" name="is_new" value="1">
                                 <span class="form-check-label">Novo</span>
                             </label>
                             <label class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_new" value="0">
+                                <input class="form-check-input" type="radio" name="is_new" value="0" checked>
                                 <span class="form-check-label">Usado</span>
                             </label>
                         </div>
@@ -179,6 +179,7 @@
                                     <th>Faixa</th>
                                     <th>Duração</th>
                                     <th>YouTube URL</th>
+                                    <th>Ação</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -187,7 +188,17 @@
                                         <td>{{ $track->name }}</td>
                                         <td>{{ $track->duration }}</td>
                                         <td>
-                                            <input type="text" name="track_youtube_urls[{{ $track->id }}]" placeholder="YouTube URL (optional)" class="form-control">
+                                            <input type="text" name="track_youtube_urls[{{ $track->id }}]" placeholder="YouTube URL (optional)" class="form-control youtube-url-input">
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-secondary search-youtube" data-track-name="{{ $track->name }}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                    <circle cx="10" cy="10" r="7"></circle>
+                                                    <line x1="21" y1="21" x2="15" y2="15"></line>
+                                                </svg>
+                                                Buscar
+                                            </button>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -202,5 +213,109 @@
         </div>
     </div>
 </div>
+
+<!-- Tabler modal for YouTube search results -->
+<div class="modal modal-blur fade" id="youtube-results-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select YouTube Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="youtube-results-list" class="list-group list-group-flush"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchButtons = document.querySelectorAll('.search-youtube');
+    const modalElement = document.getElementById('youtube-results-modal');
+    const resultsList = document.getElementById('youtube-results-list');
+
+    searchButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const trackName = this.dataset.trackName;
+            const artistName = '{{ $vinylMaster->artists->pluck('name')->join(' ') }}';
+            const inputField = this.closest('tr').querySelector('.youtube-url-input');
+            searchYouTube(trackName, artistName, inputField);
+        });
+    });
+
+    function searchYouTube(trackName, artistName, inputField) {
+        const query = `${artistName} ${trackName}`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            alert('Erro de segurança. Por favor, recarregue a página e tente novamente.');
+            return;
+        }
+
+        fetch('{{ route('youtube.search') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content')
+            },
+            body: JSON.stringify({ query })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            showResultsModal(data, inputField);
+        })
+        .catch(error => {
+            console.error('Erro ao pesquisar no YouTube:', error);
+            alert('Ocorreu um erro ao pesquisar no YouTube. Por favor, tente novamente.');
+        });
+    }
+
+    function showResultsModal(results, inputField) {
+        resultsList.innerHTML = '';
+
+        if (!results || results.length === 0) {
+            resultsList.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+        } else {
+            results.forEach(item => {
+                const listItem = document.createElement('a');
+                listItem.href = '#';
+                listItem.className = 'list-group-item list-group-item-action';
+                listItem.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">${item.snippet.title}</h5>
+                    </div>
+                    <p class="mb-1">${item.snippet.description}</p>
+                `;
+                listItem.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const youtubeUrl = `https://www.youtube.com/watch?v=${item.id.videoId}`;
+                    inputField.value = youtubeUrl;
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                });
+                resultsList.appendChild(listItem);
+            });
+        }
+
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+});
+</script>
+@endpush
+
 @endsection
 

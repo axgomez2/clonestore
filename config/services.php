@@ -35,4 +35,8 @@ return [
     'token' => env('DISCOGS_TOKEN'),
     ],
 
+    'youtube' => [
+    'api_key' => env('YOUTUBE_API_KEY'),
+    ],
+
 ];

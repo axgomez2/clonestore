@@ -8,9 +8,9 @@ class AudioPlayer {
     this.currentIndex = 0
     this.isReady = false
     this.progressInterval = null
+    this.onYouTubeIframeAPIReady = this.onYouTubeIframeAPIReady.bind(this)
 
     this.initializeYouTubeAPI()
-    this.initializePlayerControls()
   }
 
   initializeYouTubeAPI() {
@@ -19,14 +19,20 @@ class AudioPlayer {
       tag.src = "https://www.youtube.com/iframe_api"
       const firstScriptTag = document.getElementsByTagName("script")[0]
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
-      window.onYouTubeIframeAPIReady = this.onYouTubeIframeAPIReady.bind(this)
-    } else {
+
+      window.onYouTubeIframeAPIReady = () => {
+        console.log("YouTube API is ready")
+        this.onYouTubeIframeAPIReady()
+      }
+    } else if (window.YT && window.YT.Player) {
       this.onYouTubeIframeAPIReady()
+    } else {
+      console.log("Waiting for YouTube API to be fully loaded...")
+      setTimeout(() => this.initializeYouTubeAPI(), 100)
     }
   }
 
   onYouTubeIframeAPIReady() {
-    console.log("YouTube API is ready")
     this.player = new YT.Player("youtube-player", {
       height: "0",
       width: "0",
@@ -36,6 +42,7 @@ class AudioPlayer {
         onError: this.onPlayerError.bind(this),
       },
     })
+    this.initializePlayerControls()
   }
 
   onPlayerReady(event) {
@@ -50,6 +57,11 @@ class AudioPlayer {
     document.getElementById("prev-btn").addEventListener("click", () => this.playPrevious())
     document.getElementById("volume-control").addEventListener("input", () => this.updateVolumeFromControl())
 
+    this.initializeProgressBar()
+    this.initializeVinylCards()
+  }
+
+  initializeProgressBar() {
     const progressContainer = document.getElementById("progress-container")
     const progressBar = document.getElementById("progress-bar")
     const progressHandle = document.getElementById("progress-handle")
@@ -118,6 +130,38 @@ class AudioPlayer {
     progressContainer.addEventListener("mouseleave", () => this.hideProgressPreview())
   }
 
+  initializeVinylCards() {
+    const vinylCards = document.querySelectorAll(".vinyl-card")
+    vinylCards.forEach((card) => {
+      const playButton = card.querySelector(".play-button")
+      if (playButton) {
+        playButton.addEventListener("click", () => {
+          const tracks = JSON.parse(playButton.dataset.tracks || "[]")
+          const artist = playButton.dataset.artist
+          const coverUrl = playButton.dataset.coverUrl
+          const vinylTitle = playButton.dataset.vinylTitle
+
+          const validTracks = tracks
+            .filter((track) => track.youtube_url)
+            .map((track) => ({
+              id: track.id,
+              name: track.name,
+              artist: artist,
+              youtube_url: track.youtube_url,
+              cover_url: coverUrl,
+              vinyl_title: vinylTitle,
+            }))
+
+          if (validTracks.length > 0) {
+            this.loadPlaylist(validTracks)
+          } else {
+            console.error("No playable tracks found for this vinyl")
+          }
+        })
+      }
+    })
+  }
+
   calculatePercentage(clientX, element) {
     const rect = element.getBoundingClientRect()
     const x = clientX - rect.left
@@ -126,7 +170,7 @@ class AudioPlayer {
 
   loadPlaylist(tracks) {
     console.log("Loading playlist:", tracks)
-    this.playlist = tracks.filter((track) => track.youtube_url)
+    this.playlist = tracks
     this.currentIndex = 0
     if (this.playlist.length > 0) {
       this.loadTrack(this.playlist[0])
@@ -169,7 +213,6 @@ class AudioPlayer {
       this.currentIndex++
       this.loadTrack(this.playlist[this.currentIndex])
     } else if (this.playlist.length > 0) {
-      // Loop back to the first track
       this.currentIndex = 0
       this.loadTrack(this.playlist[this.currentIndex])
     }
@@ -180,7 +223,6 @@ class AudioPlayer {
       this.currentIndex--
       this.loadTrack(this.playlist[this.currentIndex])
     } else if (this.playlist.length > 0) {
-      // Loop to the last track
       this.currentIndex = this.playlist.length - 1
       this.loadTrack(this.playlist[this.currentIndex])
     }
@@ -199,31 +241,25 @@ class AudioPlayer {
   }
 
   updatePlayerInfo() {
-    console.log("Updating player info:", this.currentTrack);
-    const titleElement = document.getElementById("track-title");
-    const artistElement = document.getElementById("track-artist");
-    const coverElement = document.getElementById("album-cover");
+    console.log("Updating player info:", this.currentTrack)
+    const titleElement = document.getElementById("track-title")
+    const artistElement = document.getElementById("track-artist")
+    const coverElement = document.getElementById("album-cover")
 
-    if (titleElement) titleElement.textContent = this.currentTrack.name || "Unknown Track";
+    if (titleElement) titleElement.textContent = this.currentTrack.name || "Unknown Track"
     if (artistElement) {
-      artistElement.textContent = `${this.currentTrack.artist || 'Unknown Artist'} - ${this.currentTrack.vinyl_title || 'Unknown Album'}`;
+      artistElement.textContent = `${this.currentTrack.artist || "Unknown Artist"} - ${this.currentTrack.vinyl_title || "Unknown Album"}`
     }
 
     if (coverElement) {
-      if (this.currentTrack.cover_url) {
-        coverElement.src = this.currentTrack.cover_url;
-      } else {
-        coverElement.src = "/images/default-cover.jpg"; // Certifique-se de que esta imagem padrão existe
+      coverElement.src = this.currentTrack.cover_url || "/images/default-cover.jpg"
+      coverElement.alt = `${this.currentTrack.vinyl_title || "Album"} cover`
+      coverElement.onerror = function () {
+        this.src = "/images/default-cover.jpg"
       }
-      coverElement.alt = `${this.currentTrack.vinyl_title || 'Album'} cover`;
-
-      // Adicione um manipulador de erro para a imagem
-      coverElement.onerror = function() {
-        this.src = "/images/default-cover.jpg"; // Use a mesma imagem padrão aqui
-      };
     }
 
-    console.log("Cover URL:", this.currentTrack.cover_url);
+    console.log("Cover URL:", this.currentTrack.cover_url)
   }
 
   updatePlayPauseButton(isPlaying) {
@@ -319,6 +355,7 @@ class AudioPlayer {
   }
 }
 
+// Initialize AudioPlayer
 const audioPlayer = new AudioPlayer()
 window.audioPlayer = audioPlayer
 

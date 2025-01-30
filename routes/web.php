@@ -1,9 +1,11 @@
 <?php
 
 
+use App\Http\Controllers\Admin\TrackController;
 use App\Http\Controllers\Pdv\PainelController;
 use App\Http\Controllers\Site\AboutController;
 use App\Http\Controllers\Site\WantlistController;
+use App\Http\Controllers\YouTubeController;
 use Illuminate\Support\Facades\Route;
 
 // site use
@@ -77,6 +79,13 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
         Route::get('/disco/{id}/images', [VinylImageController::class, 'index'])->name('admin.vinyl.images');
         Route::post('/disco/{id}/images', [VinylImageController::class, 'store'])->name('admin.vinyl.images.store');
         Route::delete('/disco/{id}/images/{imageId}', [VinylImageController::class, 'destroy'])->name('admin.vinyl.images.destroy');
+        Route::post('/vinyls/update-field', [VinylController::class, 'updateField'])->name('admin.vinyls.updateField');
+
+
+        //faixas
+        Route::get('/disco/{id}/edit-tracks', [TrackController::class, 'editTracks'])->name('admin.vinyls.edit-tracks');
+        Route::put('/disco/{id}/update-tracks', [TrackController::class, 'updateTracks'])->name('admin.vinyls.update-tracks');
+        Route::post('/youtube/search', [YouTubeController::class, 'search'])->name('youtube.search');
 
         // settings routes
 
