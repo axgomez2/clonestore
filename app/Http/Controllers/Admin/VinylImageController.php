@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class VinylImageController extends Controller
 {
@@ -21,56 +24,71 @@ class VinylImageController extends Controller
     }
 
     public function store(Request $request, $id)
-{
-    $request->validate([
-        'images.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
+    {
+        $request->validate([
+            'images' => 'required|array|max:10', // Limita a 10 imagens
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-    $vinylMaster = VinylMaster::findOrFail($id);
+        $vinylMaster = VinylMaster::findOrFail($id);
 
-    if ($request->hasFile('images')) {
-        $manager = new ImageManager(new Driver());
+        if ($request->hasFile('images')) {
+            $manager = new ImageManager(new Driver());
 
-        foreach ($request->file('images') as $image) {
-            $img = $manager->read($image);
+            DB::beginTransaction();
 
-            // Get the current dimensions
-            $width = $img->width();
-            $height = $img->height();
+            try {
+                foreach ($request->file('images') as $image) {
+                    $img = $manager->read($image);
 
-            // Determine the size to crop (smallest dimension)
-            $size = min($width, $height);
+                    // Obter as dimensões atuais
+                    $width = $img->width();
+                    $height = $img->height();
 
-            // Calculate crop position (center)
-            $x = ($width - $size) / 2;
-            $y = ($height - $size) / 2;
+                    // Determinar o tamanho para cortar (menor dimensão)
+                    $size = min($width, $height);
 
-            // Crop the image
-            $img->crop($size, $size, $x, $y);
+                    // Calcular a posição de corte (centro)
+                    $x = ($width - $size) / 2;
+                    $y = ($height - $size) / 2;
 
-            // Resize to 400x400
-            $img->resize(400, 400);
+                    // Cortar a imagem
+                    $img->crop($size, $size, $x, $y);
 
-            // Generate a unique filename
-            $filename = uniqid('vinyl_') . '.jpg';
-            $path = 'vinyl_images/' . $filename;
+                    // Redimensionar para 400x400
+                    $img->resize(400, 400);
 
-            // Save the image
-            Storage::disk('public')->put($path, $img->toJpeg(80));
+                    // Gerar um nome de arquivo único
+                    $filename = uniqid('vinyl_') . '.jpg';
+                    $path = 'vinyl_images/' . $filename;
 
-            $media = new Media([
-                'file_path' => $path,
-                'file_name' => $filename,
-                'file_size' => Storage::disk('public')->size($path),
-                'file_type' => 'image/jpeg',
-            ]);
-            $vinylMaster->media()->save($media);
+                    // Salvar a imagem
+                    $savedImage = Storage::disk('public')->put($path, $img->toJpeg(80));
+
+                    if (!$savedImage) {
+                        throw new \Exception('Falha ao salvar a imagem: ' . $filename);
+                    }
+
+                    $media = new Media([
+                        'file_path' => $path,
+                        'file_name' => $filename,
+                        'file_size' => Storage::disk('public')->size($path),
+                        'file_type' => 'image/jpeg',
+                    ]);
+                    $vinylMaster->media()->save($media);
+                }
+
+                DB::commit();
+                return redirect()->route('admin.vinyl.images', $id)->with('success', 'Imagens enviadas e cortadas com sucesso.');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Erro ao fazer upload das imagens: ' . $e->getMessage());
+                return redirect()->route('admin.vinyl.images', $id)->with('error', 'Ocorreu um erro ao fazer upload das imagens. Por favor, tente novamente.');
+            }
         }
+
+        return redirect()->route('admin.vinyl.images', $id)->with('error', 'Nenhuma imagem foi enviada.');
     }
-
-    return redirect()->route('admin.vinyl.images', $id)->with('success', 'Images uploaded and cropped successfully.');
-}
-
     public function destroy($id, $imageId)
     {
         $media = Media::findOrFail($imageId);

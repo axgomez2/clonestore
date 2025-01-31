@@ -1,19 +1,16 @@
 @props(['items' => []])
 
-<div class="page-header mb-3">
-    <div class="row align-items-center">
-        <div class="col">
-            <ol class="breadcrumb" aria-label="breadcrumbs">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Painel</a></li>
-                @foreach($items as $item)
-                    @if($loop->last)
-                        <li class="breadcrumb-item active" aria-current="page">{{ $item['title'] }}</li>
-                    @else
-                        <li class="breadcrumb-item"><a href="{{ $item['url'] }}">{{ $item['title'] }}</a></li>
-                    @endif
-                @endforeach
-            </ol>
-        </div>
-    </div>
-</div>
+<nav aria-label="breadcrumb" class="text-sm breadcrumbs">
+  <ul class="p-0 m-0">
+    <li><a href="{{ route('admin.dashboard') }}" class="text-gray-600 hover:text-gray-800">Painel</a></li>
+    @foreach($items as $item)
+        @if($loop->last)
+            <li class="text-gray-800 font-semibold" aria-current="page">{{ $item['title'] }}</li>
+        @else
+            <li><a href="{{ $item['url'] }}" class="text-gray-600 hover:text-gray-800">{{ $item['title'] }}</a></li>
+        @endif
+    @endforeach
+  </ul>
+</nav>
+
 

@@ -3,3 +3,49 @@
 @import "tailwindcss/utilities";
 @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
 
+/* Estilos globais para garantir o scroll correto */
+html,
+body {
+  height: 100%;
+  overflow-y: auto;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+  overflow-y: auto;
+}
+
+/* Ajuste para o conteúdo principal */
+.container {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Estilos para garantir que modais e dropdowns apareçam corretamente */
+.modal,
+.dropdown-content {
+  z-index: 9999;
+}
+
+/* Estilo para a barra de rolagem */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

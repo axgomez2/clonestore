@@ -1,198 +1,431 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Settings</h1>
+<div x-data="settingsManager()" class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Configurações</h1>
 
     <div x-data="{ activeTab: 'weights' }">
         <!-- Tab Navigation -->
-        <div class="mb-4 border-b border-gray-200">
-            <ul class="flex flex-wrap -mb-px">
-                <li class="mr-2">
-                    <a class="inline-block p-4 rounded-t-lg" :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'weights', 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'weights' }" @click.prevent="activeTab = 'weights'" href="#">Weights</a>
-                </li>
-                <li class="mr-2">
-                    <a class="inline-block p-4 rounded-t-lg" :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'dimensions', 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'dimensions' }" @click.prevent="activeTab = 'dimensions'" href="#">Dimensions</a>
-                </li>
-                <li class="mr-2">
-                    <a class="inline-block p-4 rounded-t-lg" :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'brands', 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'brands' }" @click.prevent="activeTab = 'brands'" href="#">Brands</a>
-                </li>
-                <li class="mr-2">
-                    <a class="inline-block p-4 rounded-t-lg" :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'equipment-categories', 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'equipment-categories' }" @click.prevent="activeTab = 'equipment-categories'" href="#">Equipment Categories</a>
-                </li>
-            </ul>
+        <div class="tabs tabs-boxed mb-4">
+            <a class="tab" :class="{ 'tab-active': activeTab === 'weights' }" @click.prevent="activeTab = 'weights'">Pesos</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'dimensions' }" @click.prevent="activeTab = 'dimensions'">Dimensões</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'brands' }" @click.prevent="activeTab = 'brands'">Marcas</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'equipment-categories' }" @click.prevent="activeTab = 'equipment-categories'">Categorias de Equipamentos</a>
         </div>
 
         <!-- Tab Content -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <!-- Weights Tab -->
-            <div x-show="activeTab === 'weights'">
-                <h2 class="text-xl font-semibold mb-4">Weights</h2>
-                <form action="{{ route('admin.settings.storeWeight') }}" method="POST" class="mb-4">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label for="weight_name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" name="name" id="weight_name" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <!-- Weights Tab -->
+                <div x-show="activeTab === 'weights'">
+                    <h2 class="card-title mb-4">Pesos</h2>
+                    <form @submit.prevent="addWeight" class="mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-control">
+                                <label for="weight_name" class="label">
+                                    <span class="label-text">Nome</span>
+                                </label>
+                                <input type="text" x-model="newWeight.name" id="weight_name" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="weight_value" class="label">
+                                    <span class="label-text">Valor</span>
+                                </label>
+                                <input type="number" step="0.01" x-model="newWeight.value" id="weight_value" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="weight_unit" class="label">
+                                    <span class="label-text">Unidade</span>
+                                </label>
+                                <input type="text" x-model="newWeight.unit" id="weight_unit" required class="input input-bordered">
+                            </div>
                         </div>
-                        <div>
-                            <label for="weight_value" class="block text-sm font-medium text-gray-700">Value</label>
-                            <input type="number" step="0.01" name="value" id="weight_value" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                Adicionar Peso
+                            </button>
                         </div>
-                        <div>
-                            <label for="weight_unit" class="block text-sm font-medium text-gray-700">Unit</label>
-                            <input type="text" name="unit" id="weight_unit" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Add Weight
-                        </button>
-                    </div>
-                </form>
-                <ul class="divide-y divide-gray-200">
-                    @foreach($weights as $weight)
-                        <li class="py-4">
-                            <p class="text-sm font-medium text-gray-900">{{ $weight->name }} ({{ $weight->value }} {{ $weight->unit }})</p>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-
-
-            <!-- Dimensions Tab -->
-            <div x-show="activeTab === 'dimensions'">
-                <h2 class="text-xl font-semibold mb-4">Dimensions</h2>
-                <form action="{{ route('admin.settings.storeDimension') }}" method="POST" class="mb-4">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div>
-                            <label for="dimension_name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" name="name" id="dimension_name" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label for="dimension_height" class="block text-sm font-medium text-gray-700">Height</label>
-                            <input type="number" step="0.01" name="height" id="dimension_height" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label for="dimension_width" class="block text-sm font-medium text-gray-700">Width</label>
-                            <input type="number" step="0.01" name="width" id="dimension_width" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label for="dimension_depth" class="block text-sm font-medium text-gray-700">Depth</label>
-                            <input type="number" step="0.01" name="depth" id="dimension_depth" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label for="dimension_unit" class="block text-sm font-medium text-gray-700">Unit</label>
-                            <input type="text" name="unit" id="dimension_unit" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Add Dimension
-                        </button>
-                    </div>
-                </form>
-                <ul class="divide-y divide-gray-200">
-                    @foreach($dimensions as $dimension)
-                        <li class="py-4">
-                            <p class="text-sm font-medium text-gray-900">{{ $dimension->name }} ({{ $dimension->height }}x{{ $dimension->width }}x{{ $dimension->depth }} {{ $dimension->unit }})</p>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-
-            <!-- Brands Tab -->
-            <div x-show="activeTab === 'brands'">
-                <h2 class="text-xl font-semibold mb-4">Brands</h2>
-                <form action="{{ route('admin.settings.storeBrand') }}" method="POST" class="mb-4">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="brand_name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" name="name" id="brand_name" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label for="brand_logo_url" class="block text-sm font-medium text-gray-700">Logo URL</label>
-                            <input type="url" name="logo_url" id="brand_logo_url" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label for="brand_description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="brand_description" rows="3" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Add Brand
-                        </button>
-                    </div>
-                </form>
-                <ul class="divide-y divide-gray-200">
-                    @foreach($brands as $brand)
-                        <li class="py-4">
-                            <div class="flex items-center space-x-4">
-                                @if($brand->logo_url)
-                                    <img src="{{ $brand->logo_url }}" alt="{{ $brand->name }} logo" class="h-12 w-12 object-contain">
-                                @endif
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ $brand->name }}</p>
-                                    <p class="text-sm text-gray-500">{{ $brand->description }}</p>
+                    </form>
+                    <ul class="menu bg-base-200 w-full rounded-box">
+                        <template x-for="weight in weights" :key="weight.id">
+                            <li>
+                                <div class="flex items-center justify-between w-full">
+                                    <template x-if="!weight.editing">
+                                        <span x-text="`${weight.name} (${weight.value} ${weight.unit})`"></span>
+                                    </template>
+                                    <template x-if="weight.editing">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" x-model="weight.name" class="input input-bordered input-sm">
+                                            <input type="number" step="0.01" x-model="weight.value" class="input input-bordered input-sm">
+                                            <input type="text" x-model="weight.unit" class="input input-bordered input-sm">
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <button @click="toggleWeightEdit(weight)" class="btn btn-sm" x-text="weight.editing ? 'Salvar' : 'Editar'"></button>
+                                        <button @click="deleteWeight(weight)" class="btn btn-sm btn-error">Excluir</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
 
-            <!-- Equipment Categories Tab -->
-            <div x-show="activeTab === 'equipment-categories'">
-                <h2 class="text-xl font-semibold mb-4">Equipment Categories</h2>
-                <form action="{{ route('admin.settings.storeEquipmentCategory') }}" method="POST" class="mb-4">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="category_name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" name="name" id="category_name" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label for="category_parent_id" class="block text-sm font-medium text-gray-700">Parent Category</label>
-                            <select name="parent_id" id="category_parent_id" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                <option value="">None</option>
-                                @foreach($equipmentCategories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label for="category_description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="category_description" rows="3" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Add Equipment Category
-                        </button>
-                    </div>
-                </form>
-                <ul class="divide-y divide-gray-200">
-                    @foreach($equipmentCategories as $category)
-                        <li class="py-4">
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">{{ $category->name }}</p>
-                                <p class="text-sm text-gray-500">{{ $category->description }}</p>
-                                @if($category->parent)
-                                    <p class="text-xs text-gray-400">Parent: {{ $category->parent->name }}</p>
-                                @endif
+                <!-- Dimensions Tab -->
+                <div x-show="activeTab === 'dimensions'">
+                    <h2 class="card-title mb-4">Dimensões</h2>
+                    <form @submit.prevent="addDimension" class="mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            <div class="form-control">
+                                <label for="dimension_name" class="label">
+                                    <span class="label-text">Nome</span>
+                                </label>
+                                <input type="text" x-model="newDimension.name" id="dimension_name" required class="input input-bordered">
                             </div>
-                        </li>
-                    @endforeach
-                </ul>
+                            <div class="form-control">
+                                <label for="dimension_height" class="label">
+                                    <span class="label-text">Altura</span>
+                                </label>
+                                <input type="number" step="0.01" x-model="newDimension.height" id="dimension_height" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="dimension_width" class="label">
+                                    <span class="label-text">Largura</span>
+                                </label>
+                                <input type="number" step="0.01" x-model="newDimension.width" id="dimension_width" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="dimension_depth" class="label">
+                                    <span class="label-text">Profundidade</span>
+                                </label>
+                                <input type="number" step="0.01" x-model="newDimension.depth" id="dimension_depth" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="dimension_unit" class="label">
+                                    <span class="label-text">Unidade</span>
+                                </label>
+                                <input type="text" x-model="newDimension.unit" id="dimension_unit" required class="input input-bordered">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                Adicionar Dimensão
+                            </button>
+                        </div>
+                    </form>
+                    <ul class="menu bg-base-200 w-full rounded-box">
+                        <template x-for="dimension in dimensions" :key="dimension.id">
+                            <li>
+                                <div class="flex items-center justify-between w-full">
+                                    <template x-if="!dimension.editing">
+                                        <span x-text="`${dimension.name} (${dimension.height}x${dimension.width}x${dimension.depth} ${dimension.unit})`"></span>
+                                    </template>
+                                    <template x-if="dimension.editing">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" x-model="dimension.name" class="input input-bordered input-sm">
+                                            <input type="number" step="0.01" x-model="dimension.height" class="input input-bordered input-sm">
+                                            <input type="number" step="0.01" x-model="dimension.width" class="input input-bordered input-sm">
+                                            <input type="number" step="0.01" x-model="dimension.depth" class="input input-bordered input-sm">
+                                            <input type="text" x-model="dimension.unit" class="input input-bordered input-sm">
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <button @click="toggleDimensionEdit(dimension)" class="btn btn-sm" x-text="dimension.editing ? 'Salvar' : 'Editar'"></button>
+                                        <button @click="deleteDimension(dimension)" class="btn btn-sm btn-error">Excluir</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <!-- Brands Tab -->
+                <div x-show="activeTab === 'brands'">
+                    <h2 class="card-title mb-4">Marcas</h2>
+                    <form @submit.prevent="addBrand" class="mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label for="brand_name" class="label">
+                                    <span class="label-text">Nome</span>
+                                </label>
+                                <input type="text" x-model="newBrand.name" id="brand_name" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="brand_logo_url" class="label">
+                                    <span class="label-text">URL do Logo</span>
+                                </label>
+                                <input type="url" x-model="newBrand.logo_url" id="brand_logo_url" class="input input-bordered">
+                            </div>
+                            <div class="form-control md:col-span-2">
+                                <label for="brand_description" class="label">
+                                    <span class="label-text">Descrição</span>
+                                </label>
+                                <textarea x-model="newBrand.description" id="brand_description" rows="3" class="textarea textarea-bordered"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                Adicionar Marca
+                            </button>
+                        </div>
+                    </form>
+                    <ul class="menu bg-base-200 w-full rounded-box">
+                        <template x-for="brand in brands" :key="brand.id">
+                            <li>
+                                <div class="flex items-center justify-between w-full">
+                                    <template x-if="!brand.editing">
+                                        <div class="flex items-center">
+                                            <img x-show="brand.logo_url" :src="brand.logo_url" alt="Logo" class="w-8 h-8 mr-2 object-contain">
+                                            <span x-text="brand.name"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="brand.editing">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" x-model="brand.name" class="input input-bordered input-sm">
+                                            <input type="url" x-model="brand.logo_url" class="input input-bordered input-sm">
+                                            <textarea x-model="brand.description" class="textarea textarea-bordered textarea-sm"></textarea>
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <button @click="toggleBrandEdit(brand)" class="btn btn-sm" x-text="brand.editing ? 'Salvar' : 'Editar'"></button>
+                                        <button @click="deleteBrand(brand)" class="btn btn-sm btn-error">Excluir</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <!-- Equipment Categories Tab -->
+                <div x-show="activeTab === 'equipment-categories'">
+                    <h2 class="card-title mb-4">Categorias de Equipamentos</h2>
+                    <form @submit.prevent="addEquipmentCategory" class="mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label for="category_name" class="label">
+                                    <span class="label-text">Nome</span>
+                                </label>
+                                <input type="text" x-model="newEquipmentCategory.name" id="category_name" required class="input input-bordered">
+                            </div>
+                            <div class="form-control">
+                                <label for="category_parent_id" class="label">
+                                    <span class="label-text">Categoria Pai</span>
+                                </label>
+                                <select x-model="newEquipmentCategory.parent_id" id="category_parent_id" class="select select-bordered w-full">
+                                    <option value="">Nenhuma</option>
+                                    <template x-for="category in equipmentCategories" :key="category.id">
+                                        <option :value="category.id" x-text="category.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="form-control md:col-span-2">
+                                <label for="category_description" class="label">
+                                    <span class="label-text">Descrição</span>
+                                </label>
+                                <textarea x-model="newEquipmentCategory.description" id="category_description" rows="3" class="textarea textarea-bordered"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                Adicionar Categoria de Equipamento
+                            </button>
+                        </div>
+                    </form>
+                    <ul class="menu bg-base-200 w-full rounded-box">
+                        <template x-for="category in equipmentCategories" :key="category.id">
+                            <li>
+                                <div class="flex items-center justify-between w-full">
+                                    <template x-if="!category.editing">
+                                        <div>
+                                            <span x-text="category.name"></span>
+                                            <span x-show="category.parent_id" x-text="` (Pai: ${getCategoryParentName(category.parent_id)})`" class="text-sm text-gray-500"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="category.editing">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" x-model="category.name" class="input input-bordered input-sm">
+                                            <select x-model="category.parent_id" class="select select-bordered select-sm">
+                                                <option value="">Nenhuma</option>
+                                                <template x-for="parentCategory in equipmentCategories.filter(c => c.id !== category.id)" :key="parentCategory.id">
+                                                    <option :value="parentCategory.id" x-text="parentCategory.name"></option>
+                                                </template>
+                                            </select>
+                                            <textarea x-model="category.description" class="textarea textarea-bordered textarea-sm"></textarea>
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <button @click="toggleEquipmentCategoryEdit(category)" class="btn btn-sm" x-text="category.editing ? 'Salvar' : 'Editar'"></button>
+                                        <button @click="deleteEquipmentCategory(category)" class="btn btn-sm btn-error">Excluir</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+<script>
+function settingsManager() {
+    return {
+        weights: @json($weights),
+        dimensions: @json($dimensions),
+        brands: @json($brands),
+        equipmentCategories: @json($equipmentCategories),
+        newWeight: { name: '', value: '', unit: '' },
+        newDimension: { name: '', height: '', width: '', depth: '', unit: '' },
+        newBrand: { name: '', logo_url: '', description: '' },
+        newEquipmentCategory: { name: '', parent_id: '', description: '' },
+
+        addWeight() {
+            axios.post('{{ route('admin.settings.storeWeight') }}', this.newWeight)
+                .then(response => {
+                    this.weights.push(response.data);
+                    this.newWeight = { name: '', value: '', unit: '' };
+                })
+                .catch(error => console.error(error));
+        },
+
+        toggleWeightEdit(weight) {
+            if (weight.editing) {
+                this.updateWeight(weight);
+            } else {
+                weight.editing = true;
+            }
+        },
+
+        updateWeight(weight) {
+            axios.put(`/admin/settings/weights/${weight.id}`, weight)
+                .then(() => {
+                    weight.editing = false;
+                })
+                .catch(error => console.error(error));
+        },
+
+        deleteWeight(weight) {
+            if (confirm('Tem certeza que deseja excluir este peso?')) {
+                axios.delete(`/admin/settings/weights/${weight.id}`)
+                    .then(() => {
+                        this.weights = this.weights.filter(w => w.id !== weight.id);
+                    })
+                    .catch(error => console.error(error));
+            }
+        },
+
+        addDimension() {
+            axios.post('{{ route('admin.settings.storeDimension') }}', this.newDimension)
+                .then(response => {
+                    this.dimensions.push(response.data);
+                    this.newDimension = { name: '', height: '', width: '', depth: '', unit: '' };
+                })
+                .catch(error => console.error(error));
+        },
+
+        toggleDimensionEdit(dimension) {
+            if (dimension.editing) {
+                this.updateDimension(dimension);
+            } else {
+                dimension.editing = true;
+            }
+        },
+
+        updateDimension(dimension) {
+            axios.put(`/admin/settings/dimensions/${dimension.id}`, dimension)
+                .then(() => {
+                    dimension.editing = false;
+                })
+                .catch(error => console.error(error));
+        },
+
+        deleteDimension(dimension) {
+            if (confirm('Tem certeza que deseja excluir esta dimensão?')) {
+                axios.delete(`/admin/settings/dimensions/${dimension.id}`)
+                    .then(() => {
+                        this.dimensions = this.dimensions.filter(d => d.id !== dimension.id);
+                    })
+                    .catch(error => console.error(error));
+            }
+        },
+
+        addBrand() {
+            axios.post('{{ route('admin.settings.storeBrand') }}', this.newBrand)
+                .then(response => {
+                    this.brands.push(response.data);
+                    this.newBrand = { name: '', logo_url: '', description: '' };
+                })
+                .catch(error => console.error(error));
+        },
+
+        toggleBrandEdit(brand) {
+            if (brand.editing) {
+                this.updateBrand(brand);
+            } else {
+                brand.editing = true;
+            }
+        },
+
+        updateBrand(brand) {
+            axios.put(`/admin/settings/brands/${brand.id}`, brand)
+                .then(() => {
+                    brand.editing = false;
+                })
+                .catch(error => console.error(error));
+        },
+
+        deleteBrand(brand) {
+            if (confirm('Tem certeza que deseja excluir esta marca?')) {
+                axios.delete(`/admin/settings/brands/${brand.id}`)
+                    .then(() => {
+                        this.brands = this.brands.filter(b => b.id !== brand.id);
+                    })
+                    .catch(error => console.error(error));
+            }
+        },
+
+        addEquipmentCategory() {
+            axios.post('{{ route('admin.settings.storeEquipmentCategory') }}', this.newEquipmentCategory)
+                .then(response => {
+                    this.equipmentCategories.push(response.data);
+                    this.newEquipmentCategory = { name: '', parent_id: '', description: '' };
+                })
+                .catch(error => console.error(error));
+        },
+
+        toggleEquipmentCategoryEdit(category) {
+            if (category.editing) {
+                this.updateEquipmentCategory(category);
+            } else {
+                category.editing = true;
+            }
+        },
+
+        updateEquipmentCategory(category) {
+            axios.put(`/admin/settings/equipment-categories/${category.id}`, category)
+                .then(() => {
+                    category.editing = false;
+                })
+                .catch(error => console.error(error));
+        },
+
+        deleteEquipmentCategory(category) {
+            if (confirm('Tem certeza que deseja excluir esta categoria de equipamento?')) {
+                axios.delete(`/admin/settings/equipment-categories/${category.id}`)
+                    .then(() => {
+                        this.equipmentCategories = this.equipmentCategories.filter(c => c.id !== category.id);
+                    })
+                    .catch(error => console.error(error));
+            }
+        },
+
+        getCategoryParentName(parentId) {
+            const parent = this.equipmentCategories.find(c => c.id === parentId);
+            return parent ? parent.name : '';
+        }
+    }
+}
+</script>
 @endpush
-@endsection
+

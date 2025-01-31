@@ -64,4 +64,19 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new VerifyEmailNotification);
     }
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+    public function paymentMethods()
+    {
+        return $this->belongsToMany(PaymentMethod::class, 'user_payment_methods')
+                    ->withPivot('provider', 'account_number', 'expiration_date', 'pix_key_type', 'pix_key', 'is_default')
+                    ->withTimestamps();
+    }
+
+    public function defaultPaymentMethod()
+    {
+        return $this->paymentMethods()->wherePivot('is_default', true)->first();
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\TrackController;
 use App\Http\Controllers\Pdv\PainelController;
 use App\Http\Controllers\Site\AboutController;
@@ -71,6 +72,7 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
         Route::post('/discos/salvar', [VinylController::class, 'store'])->name('admin.vinyls.store');
         Route::get('/disco/{id}', [VinylController::class, 'show'])->name('admin.vinyls.show');
         Route::get('/disco/{id}/edit', [VinylController::class, 'edit'])->name('admin.vinyls.edit');
+        Route::put('/disco/{id}', [VinylController::class, 'update'])->name('admin.vinyls.update');
 
         Route::get('/disco/{id}/completar', [VinylController::class, 'complete'])->name('admin.vinyls.complete');
         Route::post('/disco/{id}/completar', [VinylController::class, 'storeComplete'])->name('admin.vinyl.storeComplete');
@@ -90,11 +92,35 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
         // settings routes
 
         Route::get('/configuracoes', [SettingsController::class, 'index'])->name('admin.settings.index');
-        Route::post('/configuracoes/peso', [SettingsController::class, 'storeWeight'])->name('admin.settings.storeWeight');
-        Route::post('/configuracoes/marcas', [SettingsController::class, 'storeBrand'])->name('admin.settings.storeBrand');
-        Route::post('/configuracoes/dimensoes', [SettingsController::class, 'storeDimension'])->name('admin.settings.storeDimension');
-        Route::post('/configuracoes/equipamentos-categoria', [SettingsController::class, 'storeEquipmentCategory'])->name('admin.settings.storeEquipmentCategory');
+
+
+
+            // Weight routes
+    Route::post('/settings/weights', [SettingsController::class, 'storeWeight'])->name('admin.settings.storeWeight');
+    Route::put('/settings/weights/{weight}', [SettingsController::class, 'updateWeight'])->name('admin.settings.updateWeight');
+    Route::delete('/settings/weights/{weight}', [SettingsController::class, 'deleteWeight'])->name('admin.settings.deleteWeight');
+
+    // Dimension routes
+    Route::post('/settings/dimensions', [SettingsController::class, 'storeDimension'])->name('admin.settings.storeDimension');
+    Route::put('/settings/dimensions/{dimension}', [SettingsController::class, 'updateDimension'])->name('admin.settings.updateDimension');
+    Route::delete('/settings/dimensions/{dimension}', [SettingsController::class, 'deleteDimension'])->name('admin.settings.deleteDimension');
+
+    // Brand routes
+    Route::post('/settings/brands', [SettingsController::class, 'storeBrand'])->name('admin.settings.storeBrand');
+    Route::put('/settings/brands/{brand}', [SettingsController::class, 'updateBrand'])->name('admin.settings.updateBrand');
+    Route::delete('/settings/brands/{brand}', [SettingsController::class, 'deleteBrand'])->name('admin.settings.deleteBrand');
+
+    // Equipment Category routes
+    Route::post('/settings/equipment-categories', [SettingsController::class, 'storeEquipmentCategory'])->name('admin.settings.storeEquipmentCategory');
+    Route::put('/settings/equipment-categories/{equipmentCategory}', [SettingsController::class, 'updateEquipmentCategory'])->name('admin.settings.updateEquipmentCategory');
+    Route::delete('/settings/equipment-categories/{equipmentCategory}', [SettingsController::class, 'deleteEquipmentCategory'])->name('admin.settings.deleteEquipmentCategory');
         });
+
+         // Customer routes
+    Route::get('/clientes', [CustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('/cliente/{customer}', [CustomerController::class, 'show'])->name('admin.customers.show');
+    Route::get('/cliente/{customer}/editar', [CustomerController::class, 'edit'])->name('admin.customers.edit');
+    Route::put('/cliente/{customer}', [CustomerController::class, 'update'])->name('admin.customers.update');
 });
 
     Route::middleware('auth')->group(function () {

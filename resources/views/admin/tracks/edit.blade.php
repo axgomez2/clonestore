@@ -1,36 +1,19 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Tracks')
+@section('title', 'Editar Faixas')
 
 @section('content')
-<div class="container-xl">
-    <div class="page-header d-print-none">
-        <div class="row align-items-center">
-            <div class="col">
-                <h2 class="page-title">
-                    Edit Tracks for {{ $vinyl->title }}
-                </h2>
-            </div>
-        </div>
+<div x-data="trackManager" class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Editar Faixas: {{ $vinyl->title }}</h2>
+        <a href="{{ route('admin.vinyls.show', $vinyl->id) }}" class="btn btn-ghost">Voltar</a>
     </div>
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Vinyl Information</h3>
-        </div>
-        <div class="card-body">
-            <div class="datagrid">
-                <div class="datagrid-item">
-                    <div class="datagrid-title">Artist</div>
-                    <div class="datagrid-content">{{ $vinyl->artists->pluck('name')->join(', ') }}</div>
-                </div>
-                <div class="datagrid-item">
-                    <div class="datagrid-title">Title</div>
-                    <div class="datagrid-content">{{ $vinyl->title }}</div>
-                </div>
-                <div class="datagrid-item">
-                    <div class="datagrid-title">Year</div>
-                    <div class="datagrid-content">{{ $vinyl->release_year }}</div>
-                </div>
+
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body p-4">
+            <div class="text-sm">
+                <span class="font-bold">Artista:</span> {{ $vinyl->artists->pluck('name')->join(', ') }} |
+                <span class="font-bold">Ano:</span> {{ $vinyl->release_year }}
             </div>
         </div>
     </div>
@@ -38,205 +21,113 @@
     <form action="{{ route('admin.vinyls.update-tracks', $vinyl->id) }}" method="POST">
         @csrf
         @method('PUT')
-        <div class="card mt-3">
-            <div class="card-header">
-                <h3 class="card-title">Edit Tracks</h3>
-            </div>
-            <div class="card-body">
-                <div id="tracks-container">
-                    @foreach($vinyl->tracks as $index => $track)
-                        <div class="mb-3 track-item">
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <label class="form-label">Track Name</label>
-                                    <input type="text" class="form-control" name="tracks[{{ $index }}][name]" value="{{ $track->name }}" required>
-                                    <input type="hidden" name="tracks[{{ $index }}][id]" value="{{ $track->id }}">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Duration</label>
-                                    <input type="text" class="form-control" name="tracks[{{ $index }}][duration]" value="{{ $track->duration }}">
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label">YouTube URL</label>
-                                    <div class="input-group">
-                                        <input type="url" class="form-control" name="tracks[{{ $index }}][youtube_url]" value="{{ $track->youtube_url }}">
-                                        <button type="button" class="btn btn-secondary search-youtube" data-track-name="{{ $track->name }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                <circle cx="10" cy="10" r="7"></circle>
-                                                <line x1="21" y1="21" x2="15" y2="15"></line>
-                                            </svg>
-                                            Buscar
-                                        </button>
-                                    </div>
-                                </div>
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body p-4">
+                <div id="tracks-container" class="space-y-4">
+                    <template x-for="(track, index) in tracks" :key="index">
+                        <div class="grid grid-cols-12 gap-2 items-center bg-base-200 p-2 rounded">
+                            <input type="hidden" :name="'tracks['+index+'][id]'" :value="track.id">
+                            <input type="text" x-model="track.name" :name="'tracks['+index+'][name]'" class="input input-sm input-bordered col-span-4" placeholder="Nome da Faixa" required>
+                            <input type="text" x-model="track.duration" :name="'tracks['+index+'][duration]'" class="input input-sm input-bordered col-span-2" placeholder="Duração">
+                            <div class="col-span-6 flex">
+                                <input type="url" x-model="track.youtube_url" :name="'tracks['+index+'][youtube_url]'" class="input input-sm input-bordered flex-grow" placeholder="URL do YouTube">
+                                <button type="button" class="btn btn-sm btn-square btn-secondary ml-1" @click="searchYouTube(index)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-                    @endforeach
+                    </template>
                 </div>
-                <div class="mt-3">
-                    <button type="button" id="add-track" class="btn btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                            <path d="M12 5l0 14"></path>
-                            <path d="M5 12l14 0"></path>
-                        </svg>
-                        Add New Track
-                    </button>
-                </div>
+                <button type="button" class="btn btn-sm btn-secondary mt-4" @click="addTrack">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Adicionar Faixa
+                </button>
             </div>
-            <div class="card-footer text-end">
-                <div class="d-flex">
-                    <a href="{{ route('admin.vinyls.show', $vinyl->id) }}" class="btn btn-link">Cancel</a>
-                    <button type="submit" class="btn btn-primary ms-auto">Save Changes</button>
-                </div>
+            <div class="card-actions justify-end p-4">
+                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
             </div>
         </div>
     </form>
-</div>
 
-<!-- Tabler modal for YouTube search results -->
-<div class="modal modal-blur fade" id="youtube-results-modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Select YouTube Video</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Modal para resultados do YouTube -->
+    <div x-show="showModal" class="modal modal-open" x-cloak>
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">Selecionar Vídeo do YouTube</h3>
+            <div class="space-y-2">
+                <template x-for="result in youtubeResults" :key="result.id.videoId">
+                    <div class="p-2 hover:bg-base-200 rounded cursor-pointer" @click="selectVideo(result)">
+                        <h4 class="font-semibold" x-text="result.snippet.title"></h4>
+                        <p class="text-sm text-gray-600" x-text="result.snippet.description"></p>
+                    </div>
+                </template>
             </div>
-            <div class="modal-body">
-                <div id="youtube-results-list" class="list-group list-group-flush"></div>
+            <div class="modal-action">
+                <button class="btn btn-sm" @click="closeModal">Fechar</button>
             </div>
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof bootstrap === 'undefined') {
-        console.error('Bootstrap não está carregado. Verifique se o script do Bootstrap está incluído corretamente.');
-    }
+document.addEventListener('alpine:init', () => {
+    Alpine.data('trackManager', () => ({
+        tracks: @json($vinyl->tracks),
+        showModal: false,
+        youtubeResults: [],
+        activeTrackIndex: null,
 
-    const container = document.getElementById('tracks-container');
-    const addButton = document.getElementById('add-track');
-    let trackCount = {{ $vinyl->tracks->count() }};
+        addTrack() {
+            this.tracks.push({ name: '', duration: '', youtube_url: '' });
+        },
 
-    addButton.addEventListener('click', function() {
-        const newTrack = `
-            <div class="mb-3 track-item">
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <label class="form-label">Track Name</label>
-                        <input type="text" class="form-control" name="tracks[${trackCount}][name]" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Duration</label>
-                        <input type="text" class="form-control" name="tracks[${trackCount}][duration]">
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">YouTube URL</label>
-                        <div class="input-group">
-                            <input type="url" class="form-control" name="tracks[${trackCount}][youtube_url]">
-                            <button type="button" class="btn btn-secondary search-youtube" data-track-name="">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                    <circle cx="10" cy="10" r="7"></circle>
-                                    <line x1="21" y1="21" x2="15" y2="15"></line>
-                                </svg>
-                                Buscar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', newTrack);
-        trackCount++;
-    });
-
-    container.addEventListener('click', function(e) {
-        if (e.target.classList.contains('search-youtube') || e.target.closest('.search-youtube')) {
-            const trackItem = e.target.closest('.track-item');
-            const trackName = trackItem.querySelector('input[name$="[name]"]').value;
+        async searchYouTube(index) {
+            this.activeTrackIndex = index;
+            const trackName = this.tracks[index].name;
             const artistName = '{{ $vinyl->artists->pluck('name')->join(' ') }}';
-            searchYouTube(trackName, artistName, trackItem);
-        }
-    });
+            const query = `${artistName} ${trackName}`;
 
-    function searchYouTube(trackName, artistName, trackItem) {
-        const query = `${artistName} ${trackName}`;
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-
-        if (!csrfToken) {
-            console.error('CSRF token not found');
-            alert('Erro de segurança. Por favor, recarregue a página e tente novamente.');
-            return;
-        }
-
-        fetch('{{ route('youtube.search') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken.getAttribute('content')
-            },
-            body: JSON.stringify({ query })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            showResultsModal(data, trackItem);
-        })
-        .catch(error => {
-            console.error('Erro ao pesquisar no YouTube:', error);
-            alert('Ocorreu um erro ao pesquisar no YouTube. Por favor, tente novamente.');
-        });
-    }
-
-    function showResultsModal(results, trackItem) {
-        const modalElement = document.getElementById('youtube-results-modal');
-        const resultsList = document.getElementById('youtube-results-list');
-        resultsList.innerHTML = '';
-
-        if (!results || results.length === 0) {
-            resultsList.innerHTML = '<p>Nenhum resultado encontrado.</p>';
-        } else {
-            results.forEach(item => {
-                const listItem = document.createElement('a');
-                listItem.href = '#';
-                listItem.className = 'list-group-item list-group-item-action';
-                listItem.innerHTML = `
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">${item.snippet.title}</h5>
-                    </div>
-                    <p class="mb-1">${item.snippet.description}</p>
-                `;
-                listItem.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const youtubeUrl = `https://www.youtube.com/watch?v=${item.id.videoId}`;
-                    trackItem.querySelector('input[name$="[youtube_url]"]').value = youtubeUrl;
-                    const modal = bootstrap.Modal.getInstance(modalElement);
-                    if (modal) {
-                        modal.hide();
-                    }
+            try {
+                const response = await fetch('{{ route('youtube.search') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ query })
                 });
-                resultsList.appendChild(listItem);
-            });
-        }
 
-        const modal = new bootstrap.Modal(modalElement);
-        modal.show();
-    }
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                this.youtubeResults = data;
+                this.showModal = true;
+            } catch (error) {
+                console.error('Erro ao pesquisar no YouTube:', error);
+                alert('Ocorreu um erro ao pesquisar no YouTube. Por favor, tente novamente.');
+            }
+        },
+
+        selectVideo(video) {
+            if (this.activeTrackIndex !== null) {
+                this.tracks[this.activeTrackIndex].youtube_url = `https://www.youtube.com/watch?v=${video.id.videoId}`;
+            }
+            this.closeModal();
+        },
+
+        closeModal() {
+            this.showModal = false;
+            this.youtubeResults = [];
+            this.activeTrackIndex = null;
+        }
+    }));
 });
 </script>
 @endpush
-
-@endsection
-
 

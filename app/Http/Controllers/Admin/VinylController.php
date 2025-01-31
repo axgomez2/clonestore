@@ -43,77 +43,85 @@ class VinylController extends Controller
     }
 
     public function edit($id)
-    {
-        $vinyl = VinylMaster::with(['artists', 'genres', 'styles', 'recordLabel', 'tracks'])
-                            ->findOrFail($id);
-        return view('admin.vinyls.edit', compact('vinyl'));
-    }
+{
+    $vinyl = VinylMaster::with('vinylSec')->findOrFail($id);
+    $weights = Weight::all();
+    $dimensions = Dimension::all();
+
+    return view('admin.vinyls.edit', compact('vinyl', 'weights', 'dimensions'));
+}
 
     public function create(Request $request)
     {
-        $searchResults = [];
-        $query = $request->input('query');
-        $selectedRelease = null;
+        try {
+            $searchResults = [];
+            $query = $request->input('query');
+            $selectedRelease = null;
 
-        if ($query) {
-            $searchResults = $this->searchDiscogs($query);
+            if ($query) {
+                $searchResults = $this->searchDiscogs($query);
+            }
+
+            $releaseId = $request->input('release_id');
+            if ($releaseId) {
+                $selectedRelease = $this->getDiscogsRelease($releaseId);
+            }
+
+            return view('admin.vinyls.create', compact('searchResults', 'query', 'selectedRelease'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao criar vinyl: ' . $e->getMessage());
+            return response()->view('errors.500', [], 500);
         }
-
-        $releaseId = $request->input('release_id');
-        if ($releaseId) {
-            $selectedRelease = $this->getDiscogsRelease($releaseId);
-        }
-
-        return view('admin.vinyls.create', compact('searchResults', 'query', 'selectedRelease'));
     }
 
     public function store(Request $request)
-    {
-        $releaseId = $request->input('release_id');
-        $releaseData = $this->getDiscogsRelease($releaseId);
+{
+    $releaseId = $request->input('release_id');
+    $releaseData = $this->getDiscogsRelease($releaseId);
 
-        if (!$releaseData) {
-            return response()->json(['status' => 'error', 'message' => 'Failed to fetch release data from Discogs.'], 400);
-        }
-
-        // Check if the vinyl is already in the database
-        $existingVinyl = VinylMaster::where('discogs_id', $releaseData['id'])->first();
-        if ($existingVinyl) {
-            return response()->json([
-                'status' => 'warning',
-                'message' => 'Este disco já está cadastrado.',
-                'vinyl_id' => $existingVinyl->id
-            ]);
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $vinylMaster = $this->createOrUpdateVinylMaster($releaseData);
-            $this->syncArtists($vinylMaster, $releaseData['artists']);
-            $this->syncGenres($vinylMaster, $releaseData['genres']);
-            $this->syncStyles($vinylMaster, $releaseData['styles'] ?? []);
-            $this->associateRecordLabel($vinylMaster, $releaseData['labels'][0] ?? null);
-            $this->createOrUpdateTracks($vinylMaster, $releaseData['tracklist']);
-            $this->createOrUpdateProduct($vinylMaster, $releaseData);
-
-            DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Disco salvo com sucesso.',
-                'vinyl_id' => $vinylMaster->id
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error saving vinyl data: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while saving the vinyl data: ' . $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ], 500);
-        }
+    if (!$releaseData) {
+        return response()->json(['status' => 'error', 'message' => 'Failed to fetch release data from Discogs.'], 400);
     }
+
+    // Check if the vinyl is already in the database using discogs_id
+    $existingVinyl = VinylMaster::where('discogs_id', $releaseId)->first();
+    if ($existingVinyl) {
+        return response()->json([
+            'status' => 'exists',
+            'message' => 'Este disco já está cadastrado no sistema.',
+            'vinyl_id' => $existingVinyl->id
+        ]);
+    }
+
+    DB::beginTransaction();
+
+    try {
+        $vinylMaster = $this->createOrUpdateVinylMaster($releaseData);
+        $this->syncArtists($vinylMaster, $releaseData['artists']);
+        $this->syncGenres($vinylMaster, $releaseData['genres']);
+        $this->syncStyles($vinylMaster, $releaseData['styles'] ?? []);
+        $this->associateRecordLabel($vinylMaster, $releaseData['labels'][0] ?? null);
+        $this->createOrUpdateTracks($vinylMaster, $releaseData['tracklist']);
+        $this->createOrUpdateProduct($vinylMaster, $releaseData);
+
+        DB::commit();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Disco salvo com sucesso!',
+            'vinyl_id' => $vinylMaster->id
+        ]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Error saving vinyl data: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Ocorreu um erro ao salvar o disco. Por favor, tente novamente.',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+}
 
 
 
@@ -390,6 +398,62 @@ class VinylController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to update the record'], 500);
         }
     }
+
+    public function update(Request $request, $id)
+{
+    $vinyl = VinylMaster::findOrFail($id);
+
+    $validatedData = $request->validate([
+        'description' => 'nullable|string',
+        'weight_id' => 'required|exists:weights,id',
+        'dimension_id' => 'required|exists:dimensions,id',
+        'quantity' => 'required|integer|min:0',
+        'price' => 'required|numeric|min:0',
+        'buy_price' => 'nullable|numeric|min:0',
+        'promotional_price' => 'nullable|numeric|min:0',
+        'is_promotional' => 'boolean',
+        'in_stock' => 'boolean',
+    ]);
+
+    \Log::info('Validated Data:', $validatedData);
+
+    DB::beginTransaction();
+
+    try {
+        \Log::info('Updating VinylMaster');
+        $vinyl->update([
+            'description' => $validatedData['description'],
+        ]);
+
+        \Log::info('Updating VinylSec');
+        $vinyl->vinylSec()->updateOrCreate(
+            ['vinyl_master_id' => $vinyl->id],
+            [
+                'weight_id' => $validatedData['weight_id'],
+                'dimension_id' => $validatedData['dimension_id'],
+                'quantity' => $validatedData['quantity'],
+                'price' => $validatedData['price'],
+                'buy_price' => $validatedData['buy_price'],
+                'promotional_price' => $validatedData['promotional_price'],
+                'is_promotional' => $validatedData['is_promotional'] ?? false,
+                'in_stock' => $validatedData['in_stock'] ?? false,
+            ]
+        );
+
+        DB::commit();
+        \Log::info('Update successful');
+
+        return redirect()->route('admin.vinyls.index')
+            ->with('success', 'Disco atualizado com sucesso.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Error updating vinyl: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+
+        return back()->withInput()
+            ->with('error', 'Ocorreu um erro ao atualizar o disco. Por favor, tente novamente.');
+    }
+}
 }
 
 
