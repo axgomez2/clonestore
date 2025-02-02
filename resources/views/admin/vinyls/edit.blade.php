@@ -10,7 +10,7 @@
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
             <!-- Componente de Imagem -->
-            <div x-data="{ showDiscogsModal: false }">
+            <div x-data="{ showDiscogsModal: false, showUploadModal: false }">
                 <div class="mb-6">
                     <h2 class="text-xl font-semibold mb-4">Imagem do Disco</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -26,13 +26,28 @@
                                 @endif
                             </div>
 
-                            <!-- Botão Discogs -->
-                            <button
-                                @click="showDiscogsModal = true"
-                                class="btn btn-secondary"
-                            >
-                                Buscar Imagem do Discogs
-                            </button>
+                            <!-- Botões de Ação -->
+                            <div class="flex space-x-2">
+                                <button
+                                    @click="showDiscogsModal = true"
+                                    class="btn btn-secondary"
+                                >
+                                    Buscar Imagem do Discogs
+                                </button>
+                                <button
+                                    @click="showUploadModal = true"
+                                    class="btn btn-primary"
+                                >
+                                    Upload Manual
+                                </button>
+                                @if($vinyl->cover_image)
+                                    <form action="{{ route('admin.vinyls.remove-image', $vinyl->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover esta imagem?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-error">Remover Imagem</button>
+                                    </form>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -49,6 +64,26 @@
                             </form>
                             <button @click="showDiscogsModal = false" class="btn">Cancelar</button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Modal Upload -->
+                <div x-cloak x-show="showUploadModal" class="modal modal-open">
+                    <div class="modal-box">
+                        <h3 class="font-bold text-lg">Upload Manual de Imagem</h3>
+                        <form action="{{ route('admin.vinyls.upload-image', $vinyl->id) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-control">
+                                <label class="label" for="image">
+                                    <span class="label-text">Selecione uma imagem</span>
+                                </label>
+                                <input type="file" name="image" id="image" accept="image/*" class="file-input file-input-bordered w-full" required>
+                            </div>
+                            <div class="modal-action">
+                                <button type="submit" class="btn btn-primary">Upload</button>
+                                <button type="button" @click="showUploadModal = false" class="btn">Cancelar</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -490,48 +490,54 @@ class VinylController extends Controller
     }
     // VinylController.php
 
-public function updateImage(Request $request, $id)
-{
-    $request->validate([
-        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
-    ]);
+    public function fetchDiscogsImage($id)
+    {
+        $vinyl = VinylMaster::findOrFail($id);
 
-    $vinyl = VinylMaster::findOrFail($id);
-
-    if ($request->hasFile('image')) {
-        // Remove imagem antiga se existir
-        if ($vinyl->image) {
-            Storage::delete($vinyl->image);
+        if (!$vinyl->discogs_id) {
+            return back()->with('error', 'ID do Discogs não encontrado.');
         }
 
-        // Salva nova imagem
-        $path = $request->file('image')->store('public/vinyls');
-        $vinyl->image = str_replace('public/', '', $path);
-        $vinyl->save();
+        try {
+            $release = $this->getDiscogsRelease($vinyl->discogs_id);
 
-        return back()->with('success', 'Imagem atualizada com sucesso.');
+            if ($release && isset($release['images'][0]['uri'])) {
+                $imageUrl = $release['images'][0]['uri'];
+                $imageContent = file_get_contents($imageUrl);
+                $filename = 'vinyls/' . $vinyl->id . '_' . time() . '.jpg';
+
+                Storage::put('public/' . $filename, $imageContent);
+
+                if ($vinyl->cover_image) {
+                    Storage::delete('public/' . $vinyl->cover_image);
+                }
+
+                $vinyl->cover_image = $filename;
+                $vinyl->save();
+
+                return back()->with('success', 'Imagem do Discogs importada com sucesso.');
+            }
+
+            return back()->with('warning', 'Nenhuma imagem encontrada no Discogs. Por favor, faça o upload manual de uma imagem.');
+        } catch (\Exception $e) {
+            \Log::error('Erro ao buscar imagem do Discogs: ' . $e->getMessage());
+            return back()->with('error', 'Erro ao buscar imagem do Discogs. Por favor, tente fazer o upload manual de uma imagem.');
+        }
     }
 
-    return back()->with('error', 'Erro ao atualizar imagem.');
-}
+    public function uploadImage(Request $request, $id)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-public function fetchDiscogsImage($id)
-{
-    $vinyl = VinylMaster::findOrFail($id);
+        $vinyl = VinylMaster::findOrFail($id);
 
-    if (!$vinyl->discogs_id) {
-        return back()->with('error', 'ID do Discogs não encontrado.');
-    }
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $filename = 'vinyls/' . $vinyl->id . '_' . time() . '.' . $image->getClientOriginalExtension();
 
-    try {
-        $release = $this->getDiscogsRelease($vinyl->discogs_id);
-
-        if ($release && isset($release['images'][0]['uri'])) {
-            $imageUrl = $release['images'][0]['uri'];
-            $imageContent = file_get_contents($imageUrl);
-            $filename = 'vinyls/' . $vinyl->id . '_' . time() . '.jpg';
-
-            Storage::put('public/' . $filename, $imageContent);
+            $image->storeAs('public', $filename);
 
             if ($vinyl->cover_image) {
                 Storage::delete('public/' . $vinyl->cover_image);
@@ -540,15 +546,25 @@ public function fetchDiscogsImage($id)
             $vinyl->cover_image = $filename;
             $vinyl->save();
 
-            return back()->with('success', 'Imagem do Discogs importada com sucesso.');
+            return back()->with('success', 'Imagem carregada com sucesso.');
         }
 
-        return back()->with('error', 'Nenhuma imagem encontrada no Discogs.');
-    } catch (\Exception $e) {
-        \Log::error('Erro ao buscar imagem do Discogs: ' . $e->getMessage());
-        return back()->with('error', 'Erro ao buscar imagem do Discogs.');
+        return back()->with('error', 'Falha ao carregar a imagem.');
     }
-}
+
+    public function removeImage($id)
+    {
+        $vinyl = VinylMaster::findOrFail($id);
+
+        if ($vinyl->cover_image) {
+            Storage::delete('public/' . $vinyl->cover_image);
+            $vinyl->cover_image = null;
+            $vinyl->save();
+            return back()->with('success', 'Imagem removida com sucesso.');
+        }
+
+        return back()->with('error', 'Nenhuma imagem para remover.');
+    }
 }
 
 
