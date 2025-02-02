@@ -491,80 +491,116 @@ class VinylController extends Controller
     // VinylController.php
 
     public function uploadImage(Request $request, $id)
-{
-    $request->validate([
-        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-    $vinyl = VinylMaster::findOrFail($id);
+        $vinyl = VinylMaster::findOrFail($id);
 
-    if ($request->hasFile('image')) {
-        $image = $request->file('image');
-        $filename = 'vinyl_covers/' . $vinyl->id . '_' . time() . '.' . $image->getClientOriginalExtension();
+        DB::beginTransaction();
 
-        $image->storeAs('public', $filename);
+        try {
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $coverImageName = 'vinyl_covers/' . $vinyl->id . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
 
-        if ($vinyl->cover_image) {
-            Storage::delete('public/' . $vinyl->cover_image);
-        }
+                // Salvar a nova imagem
+                Storage::disk('public')->put($coverImageName, file_get_contents($image));
 
-        $vinyl->cover_image = $filename;
-        $vinyl->save();
+                // Deletar imagem antiga se existir
+                if ($vinyl->cover_image) {
+                    Storage::disk('public')->delete($vinyl->cover_image);
+                }
 
-        return back()->with('success', 'Imagem carregada com sucesso.');
-    }
+                $vinyl->cover_image = $coverImageName;
+                $vinyl->save();
 
-    return back()->with('error', 'Falha ao carregar a imagem.');
-}
-
-public function removeImage($id)
-{
-    $vinyl = VinylMaster::findOrFail($id);
-
-    if ($vinyl->cover_image) {
-        Storage::delete('public/' . $vinyl->cover_image);
-        $vinyl->cover_image = null;
-        $vinyl->save();
-        return back()->with('success', 'Imagem removida com sucesso.');
-    }
-
-    return back()->with('error', 'Nenhuma imagem para remover.');
-}
-
-public function fetchDiscogsImage($id)
-{
-    $vinyl = VinylMaster::findOrFail($id);
-
-    if (!$vinyl->discogs_id) {
-        return back()->with('error', 'ID do Discogs não encontrado.');
-    }
-
-    try {
-        $release = $this->getDiscogsRelease($vinyl->discogs_id);
-
-        if ($release && isset($release['images'][0]['uri'])) {
-            $imageUrl = $release['images'][0]['uri'];
-            $imageContent = file_get_contents($imageUrl);
-            $filename = 'vinyl_covers/' . $vinyl->id . '_' . time() . '.jpg';
-
-            Storage::put('public/' . $filename, $imageContent);
-
-            if ($vinyl->cover_image) {
-                Storage::delete('public/' . $vinyl->cover_image);
+                DB::commit();
+                return back()->with('success', 'Imagem carregada com sucesso.');
             }
 
-            $vinyl->cover_image = $filename;
-            $vinyl->save();
+            DB::rollBack();
+            return back()->with('error', 'Falha ao carregar a imagem.');
 
-            return back()->with('success', 'Imagem do Discogs importada com sucesso.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erro ao fazer upload da imagem: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return back()->with('error', 'Ocorreu um erro ao salvar a imagem. Por favor, tente novamente.');
+        }
+    }
+
+    public function fetchDiscogsImage($id)
+    {
+        $vinyl = VinylMaster::findOrFail($id);
+
+        if (!$vinyl->discogs_id) {
+            return back()->with('error', 'ID do Discogs não encontrado.');
         }
 
-        return back()->with('warning', 'Nenhuma imagem encontrada no Discogs. Por favor, faça o upload manual de uma imagem.');
-    } catch (\Exception $e) {
-        \Log::error('Erro ao buscar imagem do Discogs: ' . $e->getMessage());
-        return back()->with('error', 'Erro ao buscar imagem do Discogs. Por favor, tente fazer o upload manual de uma imagem.');
+        DB::beginTransaction();
+
+        try {
+            $release = $this->getDiscogsRelease($vinyl->discogs_id);
+
+            if ($release && isset($release['images'][0]['uri'])) {
+                $coverImageUrl = $release['images'][0]['uri'];
+                $coverImageContents = Http::get($coverImageUrl)->body();
+                $coverImageName = 'vinyl_covers/' . $vinyl->id . '_' . Str::random(10) . '.jpg';
+
+                // Salvar a nova imagem
+                Storage::disk('public')->put($coverImageName, $coverImageContents);
+
+                // Deletar imagem antiga se existir
+                if ($vinyl->cover_image) {
+                    Storage::disk('public')->delete($vinyl->cover_image);
+                }
+
+                $vinyl->cover_image = $coverImageName;
+                $vinyl->save();
+
+                DB::commit();
+                return back()->with('success', 'Imagem do Discogs importada com sucesso.');
+            }
+
+            DB::rollBack();
+            return back()->with('warning', 'Nenhuma imagem encontrada no Discogs. Por favor, faça o upload manual de uma imagem.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erro ao buscar imagem do Discogs: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return back()->with('error', 'Erro ao buscar imagem do Discogs. Por favor, tente fazer o upload manual de uma imagem.');
+        }
     }
-}
+
+    public function removeImage($id)
+    {
+        $vinyl = VinylMaster::findOrFail($id);
+
+        DB::beginTransaction();
+
+        try {
+            if ($vinyl->cover_image) {
+                Storage::disk('public')->delete($vinyl->cover_image);
+                $vinyl->cover_image = null;
+                $vinyl->save();
+
+                DB::commit();
+                return back()->with('success', 'Imagem removida com sucesso.');
+            }
+
+            DB::rollBack();
+            return back()->with('error', 'Nenhuma imagem para remover.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erro ao remover imagem: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return back()->with('error', 'Ocorreu um erro ao remover a imagem. Por favor, tente novamente.');
+        }
+    }
 }
 
 
