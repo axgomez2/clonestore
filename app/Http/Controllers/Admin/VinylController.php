@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
+use App\Models\Wantlist;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
@@ -37,11 +40,42 @@ class VinylController extends Controller
 
     public function show($id)
     {
-        $vinyl = VinylMaster::with(['artists', 'genres', 'styles', 'recordLabel', 'tracks'])
-                            ->findOrFail($id);
-        return view('admin.vinyls.show', compact('vinyl'));
-    }
+        $vinyl = VinylMaster::with([
+            'artists', 'genres', 'styles', 'recordLabel', 'tracks', 'vinylSec'
+        ])->findOrFail($id);
 
+        // Contagem de cliques no card
+        $cardClicks = $vinyl->card_clicks ?? 0;
+
+        // Contagem de pessoas que têm o disco na wishlist
+        $wishlistCount = Wishlist::where('product_id', $vinyl->id)
+                                 ->where('product_type', 'VinylMaster')
+                                 ->count();
+
+        // Contagem de pessoas que colocaram em want list (se estiver fora de estoque)
+        $wantListCount = 0;
+        if (!$vinyl->vinylSec->in_stock) {
+            $wantListCount = WantList::where('product_id', $vinyl->id)
+                                     ->where('product_type', 'VinylMaster')
+                                     ->count();
+        }
+
+        // Contagem de carrinhos incompletos que contêm este disco
+        $incompleteCartsCount = DB::table('carts')
+            ->join('cart_items', 'carts.id', '=', 'cart_items.cart_id')
+            ->where('cart_items.product_id', $vinyl->id)
+            ->whereRaw('carts.updated_at > DATE_SUB(NOW(), INTERVAL 1 DAY)')
+            ->distinct('carts.id')
+            ->count();
+
+        return view('admin.vinyls.show', compact(
+            'vinyl',
+            'cardClicks',
+            'wishlistCount',
+            'wantListCount',
+            'incompleteCartsCount'
+        ));
+    }
     public function edit($id)
 {
     $vinyl = VinylMaster::with('vinylSec')->findOrFail($id);
@@ -452,6 +486,67 @@ class VinylController extends Controller
 
         return back()->withInput()
             ->with('error', 'Ocorreu um erro ao atualizar o disco. Por favor, tente novamente.');
+    }
+    }
+    // VinylController.php
+
+public function updateImage(Request $request, $id)
+{
+    $request->validate([
+        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+    ]);
+
+    $vinyl = VinylMaster::findOrFail($id);
+
+    if ($request->hasFile('image')) {
+        // Remove imagem antiga se existir
+        if ($vinyl->image) {
+            Storage::delete($vinyl->image);
+        }
+
+        // Salva nova imagem
+        $path = $request->file('image')->store('public/vinyls');
+        $vinyl->image = str_replace('public/', '', $path);
+        $vinyl->save();
+
+        return back()->with('success', 'Imagem atualizada com sucesso.');
+    }
+
+    return back()->with('error', 'Erro ao atualizar imagem.');
+}
+
+public function fetchDiscogsImage($id)
+{
+    $vinyl = VinylMaster::findOrFail($id);
+
+    if (!$vinyl->discogs_id) {
+        return back()->with('error', 'ID do Discogs não encontrado.');
+    }
+
+    try {
+        $release = $this->getDiscogsRelease($vinyl->discogs_id);
+
+        if ($release && isset($release['images'][0]['uri'])) {
+            $imageUrl = $release['images'][0]['uri'];
+            $imageContent = file_get_contents($imageUrl);
+            $filename = 'vinyls/' . $vinyl->id . '_' . time() . '.jpg';
+
+            Storage::put('public/' . $filename, $imageContent);
+
+            if ($vinyl->cover_image) {
+                Storage::delete('public/' . $vinyl->cover_image);
+            }
+
+            $vinyl->cover_image = $filename;
+            $vinyl->save();
+
+            return back()->with('success', 'Imagem do Discogs importada com sucesso.');
+        }
+
+        return back()->with('error', 'Nenhuma imagem encontrada no Discogs.');
+    } catch (\Exception $e) {
+        \Log::error('Erro ao buscar imagem do Discogs: ' . $e->getMessage());
+        return back()->with('error', 'Erro ao buscar imagem do Discogs.');
     }
 }
 }

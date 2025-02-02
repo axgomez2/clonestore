@@ -9,6 +9,51 @@
 
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
+            <!-- Componente de Imagem -->
+            <div x-data="{ showDiscogsModal: false }">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-4">Imagem do Disco</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <!-- Imagem Atual -->
+                            <div class="mb-4">
+                                @if($vinyl->cover_image)
+                                    <img src="{{ Storage::url($vinyl->cover_image) }}" alt="{{ $vinyl->title }}" class="w-48 h-48 object-cover rounded-lg">
+                                @else
+                                    <div class="w-48 h-48 bg-gray-200 flex items-center justify-center rounded-lg">
+                                        <span class="text-gray-500">Sem imagem</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Botão Discogs -->
+                            <button
+                                @click="showDiscogsModal = true"
+                                class="btn btn-secondary"
+                            >
+                                Buscar Imagem do Discogs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Discogs -->
+                <div x-cloak x-show="showDiscogsModal" class="modal modal-open">
+                    <div class="modal-box">
+                        <h3 class="font-bold text-lg">Buscar Imagem do Discogs</h3>
+                        <p class="py-4">Deseja buscar a imagem do Discogs para este disco?</p>
+                        <div class="modal-action">
+                            <form action="{{ route('admin.vinyls.fetch-discogs-image', $vinyl->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-primary">Buscar Imagem</button>
+                            </form>
+                            <button @click="showDiscogsModal = false" class="btn">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário principal -->
             <form action="{{ route('admin.vinyls.update', $vinyl->id) }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -98,4 +143,3 @@
     </div>
 </div>
 @endsection
-

@@ -119,6 +119,14 @@ public function wantlists()
 {
     return $this->morphMany(Wantlist::class, 'product');
 }
+public function wishlists()
+    {
+        return $this->morphMany(Wishlist::class, 'product');
+    }
 
+    public function cartItems()
+{
+    return $this->hasMany(CartItem::class, 'product_id');
+}
 
 }

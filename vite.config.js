@@ -9,7 +9,15 @@ export default defineConfig({
         }),
     ],
     build: {
-        manifest: true,
+        // Configurações específicas para produção
         outDir: 'public/build',
+        manifest: true,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    // Defina chunks manuais se necessário
+                },
+            },
+        },
     },
 });

@@ -83,6 +83,9 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
         Route::delete('/disco/{id}/images/{imageId}', [VinylImageController::class, 'destroy'])->name('admin.vinyl.images.destroy');
         Route::post('/vinyls/update-field', [VinylController::class, 'updateField'])->name('admin.vinyls.updateField');
 
+        Route::put('/vinyls/{id}/update-image', [VinylController::class, 'updateImage'])->name('admin.vinyls.update-image');
+        Route::post('/vinyls/{id}/fetch-discogs-image', [VinylController::class, 'fetchDiscogsImage'])->name('admin.vinyls.fetch-discogs-image');
+
 
         //faixas
         Route::get('/disco/{id}/edit-tracks', [TrackController::class, 'editTracks'])->name('admin.vinyls.edit-tracks');
